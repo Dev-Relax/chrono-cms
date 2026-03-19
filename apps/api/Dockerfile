@@ -41,4 +41,4 @@ COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
 EXPOSE 4000
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["sh", "-c", "npm run db:migrate && node apps/api/dist/server.js"]

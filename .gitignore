@@ -14,7 +14,6 @@ build/
 .env.*.local
 
 # Prisma
-packages/db/prisma/migrations/
 # keep the schema, ignore generated client
 packages/db/node_modules/
 
