@@ -23,32 +23,9 @@ FROM nginx:alpine AS runner
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
-# Proxy /api/* → api container (strip prefix), /uploads/* → api container,
-# everything else → SPA index.html fallback.
-RUN printf '\
-server {\n\
-  listen 80;\n\
-  root /usr/share/nginx/html;\n\
-  index index.html;\n\
-\n\
-  location /api/ {\n\
-    proxy_pass http://api:4000/;\n\
-    proxy_http_version 1.1;\n\
-    proxy_set_header Host $host;\n\
-    proxy_set_header X-Real-IP $remote_addr;\n\
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-    proxy_set_header X-Forwarded-Proto $scheme;\n\
-  }\n\
-\n\
-  location /uploads/ {\n\
-    proxy_pass http://api:4000/uploads/;\n\
-    proxy_http_version 1.1;\n\
-    proxy_set_header Host $host;\n\
-  }\n\
-\n\
-  location / {\n\
-    try_files $uri $uri/ /index.html;\n\
-  }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+# SPA fallback — all routes → index.html
+# API calls go directly to VITE_API_URL (set as a build variable in Coolify).
+RUN printf 'server {\n  listen 80;\n  root /usr/share/nginx/html;\n  index index.html;\n  location / { try_files $uri $uri/ /index.html; }\n}\n' \
+    > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
