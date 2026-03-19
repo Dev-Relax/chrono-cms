@@ -1,0 +1,58 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+#  Chronos-CMS — Docker Compose
+#  Usage:
+#    cp .env.example .env          # fill in your secrets
+#    docker compose up -d          # start Postgres + API + Web
+#    docker compose logs -f        # follow logs
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chrono
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: chronos_cms
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chrono -d chronos_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── API (Node / Fastify) ─────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://chrono:secret@db:5432/chronos_cms?schema=public"
+      API_PORT: "4000"
+    ports:
+      - "4000:4000"
+
+  # ── Web (React / Vite preview) ───────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,314 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Chronos-CMS — Prisma Schema (i18n edition)
+// Docs: https://www.prisma.io/docs/concepts/components/prisma-schema
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  EDITOR
+  AUTHOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  SPAM
+  REJECTED
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// ── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  /// bcrypt-hashed password — never expose in API responses
+  password  String
+  name      String?
+  role      Role     @default(EDITOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts         Post[]
+  pages         Page[]
+  apiKeys       ApiKey[]
+  postRevisions PostRevision[]
+  activityLogs  ActivityLog[]
+
+  @@map("users")
+}
+
+// ── Tag ──────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+// ── Post ─────────────────────────────────────────────────────────────────────
+// Container for global, locale-agnostic metadata.
+// All translatable content (title, slug, body) lives in PostTranslation.
+
+model Post {
+  id            String     @id @default(cuid())
+  /// BCP-47 locale tag of the canonical version (e.g. "en", "fr")
+  defaultLocale String     @default("en")
+  status        PostStatus @default(DRAFT)
+  featured      Boolean    @default(false)
+  publishedAt   DateTime?
+  scheduledAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  translations PostTranslation[]
+  tags         PostTag[]
+  revisions    PostRevision[]
+  comments     Comment[]
+
+  @@index([status])
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([featured])
+  @@index([authorId])
+  @@index([scheduledAt])
+  @@map("posts")
+}
+
+// ── PostTranslation ───────────────────────────────────────────────────────────
+// Per-locale translatable content for a Post.
+// Unique slug per locale enables /en/my-post vs /fr/mon-article routing.
+
+model PostTranslation {
+  id    String @id @default(cuid())
+  postId String
+  /// BCP-47 locale tag (e.g. "en", "fr", "es")
+  locale String
+
+  title   String
+  slug    String
+  /// TipTap ProseMirror document stored as raw JSON
+  content Json   @default("{}")
+  /// Plain-text excerpt (optional)
+  excerpt String?
+
+  /// SEO overrides — falls back to title/excerpt when blank
+  metaTitle       String?
+  metaDescription String?
+  /// URL of the Open Graph / social share image
+  ogImage         String?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  /// One translation per locale per post
+  @@unique([postId, locale])
+  /// Slugs must be unique within a locale
+  @@unique([locale, slug])
+  @@index([slug])
+  @@index([locale])
+  @@map("post_translations")
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+// Standalone CMS pages (About, Contact, etc.) — no tags, no scheduling.
+// All translatable content (title, slug, body) lives in PageTranslation.
+
+model Page {
+  id            String     @id @default(cuid())
+  /// BCP-47 locale tag of the canonical version (e.g. "en", "fr")
+  defaultLocale String     @default("en")
+  status        PageStatus @default(DRAFT)
+  /// Layout + display settings: { layout, showToc, showHero }
+  pageConfig    Json       @default("{}")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  translations PageTranslation[]
+
+  @@index([status])
+  @@map("pages")
+}
+
+// ── PageTranslation ───────────────────────────────────────────────────────────
+// Per-locale translatable content for a Page.
+
+model PageTranslation {
+  id     String @id @default(cuid())
+  pageId String
+  /// BCP-47 locale tag (e.g. "en", "fr", "es")
+  locale String
+
+  title           String
+  slug            String
+  /// TipTap ProseMirror document stored as raw JSON
+  content         Json    @default("{}")
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+  /// Per-locale hero: { subtitle, image, ctaText, ctaUrl }
+  heroContent     Json?
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  /// One translation per locale per page
+  @@unique([pageId, locale])
+  /// Slugs must be unique within a locale
+  @@unique([locale, slug])
+  @@index([slug])
+  @@index([locale])
+  @@map("page_translations")
+}
+
+// ── SiteSettings (singleton) ─────────────────────────────────────────────────
+
+model SiteSettings {
+  id          String   @id @default("singleton")
+  themeConfig Json     @default("{}")
+  brandConfig Json     @default("{}")
+  navConfig   Json     @default("{}")
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// ── PostTag (join table) ──────────────────────────────────────────────────────
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+// ── Webhook ───────────────────────────────────────────────────────────────────
+// Outbound HTTP callbacks fired on CMS events.
+
+model Webhook {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  /// Optional HMAC-SHA256 signing secret — sent as X-Webhook-Signature header
+  secret    String?
+  /// Array of event names this webhook listens to. Empty = all events.
+  events    String[]
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("webhooks")
+}
+
+// ── ApiKey ────────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  keyHash    String    @unique
+  prefix     String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+// ── PostRevision ──────────────────────────────────────────────────────────────
+// Per-locale snapshot of a translation saved on every PUT.
+// Latest 10 revisions per post+locale are kept; older ones are pruned.
+
+model PostRevision {
+  id     String @id @default(cuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// The locale this revision belongs to
+  locale String @default("en")
+  title  String
+  content Json
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([postId, locale])
+  @@map("post_revisions")
+}
+
+// ── Comment ───────────────────────────────────────────────────────────────────
+
+model Comment {
+  id          String        @id @default(cuid())
+  content     String
+  authorName  String
+  authorEmail String
+  status      CommentStatus @default(PENDING)
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([status])
+  @@index([parentId])
+  @@map("comments")
+}
+
+// ── ActivityLog ───────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      String
+  entityType  String
+  entityId    String?
+  entityTitle String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
+  @@map("activity_logs")
+}

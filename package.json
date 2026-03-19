@@ -1,0 +1,24 @@
+{
+  "name": "chronos-cms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A self-hostable, open-source headless CMS for developers",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
+    "setup": "prisma generate --schema=packages/db/prisma/schema.prisma && npm run build --workspace=packages/db && prisma migrate dev --schema=packages/db/prisma/schema.prisma && node packages/db/dist/seed.js",
+    "build": "npm run build --workspace=packages/db && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "db:migrate": "prisma migrate deploy --schema=packages/db/prisma/schema.prisma",
+    "db:migrate:dev": "prisma migrate dev --schema=packages/db/prisma/schema.prisma",
+    "db:seed": "node packages/db/dist/seed.js",
+    "db:studio": "prisma studio --schema=packages/db/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "@tiptap/extension-text-style": "^3.20.1",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.4.5"
+  }
+}
