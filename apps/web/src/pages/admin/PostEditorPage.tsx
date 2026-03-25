@@ -39,7 +39,7 @@ const KNOWN_FLAGS: Record<string, string> = {
 const getLocaleFlag = (locale: string) =>
   KNOWN_FLAGS[locale.toLowerCase()] ?? "🌐";
 
-const COMMON_LOCALES = ["es", "de", "it", "pt", "nl", "ru", "ja", "ko", "zh", "ar", "pl", "tr"];
+const COMMON_LOCALES = ["fr", "es", "de", "it", "pt", "nl", "ru", "ja", "ko", "zh", "ar", "pl", "tr"];
 
 interface LocaleData {
   title:           string;
