@@ -361,11 +361,10 @@ export const postsRoutes = async (fastify: FastifyInstance): Promise<void> => {
         return reply.status(400).send({ error: "At least one translation is required" });
       }
 
-      const tagConnections = tags
-        ? await Promise.all(tags.map((s) => prisma.tag.upsert({
-            where: { slug: s }, update: {}, create: { name: s, slug: s },
-          })))
-        : [];
+      const uniqueTags = tags ? [...new Set(tags)] : [];
+      const tagConnections = await Promise.all(uniqueTags.map((s) => prisma.tag.upsert({
+        where: { slug: s }, update: {}, create: { name: s, slug: s },
+      })));
 
       const post = await prisma.post.create({
         data: {
