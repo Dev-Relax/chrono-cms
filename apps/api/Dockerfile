@@ -39,6 +39,8 @@ COPY --from=builder /app/packages/db/package.json ./packages/db/package.json
 COPY --from=builder /app/packages/db/prisma ./packages/db/prisma
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY apps/api/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 EXPOSE 4000
-CMD ["sh", "-c", "npm run db:migrate && node apps/api/dist/server.js"]
+CMD ["./entrypoint.sh"]
