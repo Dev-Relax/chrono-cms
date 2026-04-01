@@ -1,138 +1,151 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { Layout } from "../../components/common/Layout.js";
-import { commentsApi } from "../../lib/api.js";
-import type { Comment, CommentStatus } from "../../types/index.js";
-import { SkeletonTableRows } from "../../components/common/Skeleton.js";
+import React, { useEffect, useState, useCallback } from "react"
+import { Link } from "react-router-dom"
+import { Layout } from "../../components/common/Layout.js"
+import { commentsApi } from "../../lib/api.js"
+import type { Comment, CommentStatus } from "../../types/index.js"
+import { SkeletonTableRows } from "../../components/common/Skeleton.js"
 
 const STATUS_TABS: { key: CommentStatus; label: string }[] = [
-  { key: "PENDING",  label: "Pending"  },
+  { key: "PENDING", label: "Pending" },
   { key: "APPROVED", label: "Approved" },
-  { key: "SPAM",     label: "Spam"     },
+  { key: "SPAM", label: "Spam" },
   { key: "REJECTED", label: "Rejected" },
-];
+]
 
 const STATUS_BADGE: Record<CommentStatus, string> = {
-  PENDING:  "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  PENDING: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
   APPROVED: "bg-green-500/15  text-green-400  border-green-500/30",
-  SPAM:     "bg-red-500/15    text-red-400    border-red-500/30",
+  SPAM: "bg-red-500/15    text-red-400    border-red-500/30",
   REJECTED: "bg-slate-700/40  text-slate-400  border-slate-600/40",
-};
+}
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 
 const CommentsAdmin: React.FC = () => {
-  const [activeTab,   setActiveTab]   = useState<CommentStatus>("PENDING");
-  const [comments,    setComments]    = useState<Comment[]>([]);
-  const [total,       setTotal]       = useState(0);
-  const [page,        setPage]        = useState(1);
-  const [totalPages,  setTotalPages]  = useState(1);
-  const [loading,     setLoading]     = useState(true);
-  const [selected,    setSelected]    = useState<Set<string>>(new Set());
-  const [actionBusy,  setActionBusy]  = useState(false);
-  const [toast,       setToast]       = useState<string | null>(null);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<CommentStatus>("PENDING")
+  const [comments, setComments] = useState<Comment[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [actionBusy, setActionBusy] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [pendingCount, setPendingCount] = useState(0)
 
   const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  };
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const fetchComments = useCallback(async (tab: CommentStatus, pg: number) => {
-    setLoading(true);
-    setSelected(new Set());
+    setLoading(true)
+    setSelected(new Set())
     try {
-      const res = await commentsApi.adminList({ status: tab, page: pg, limit: 25 });
-      setComments(res.data);
-      setTotal(res.meta.total);
-      setTotalPages(res.meta.totalPages);
+      const res = await commentsApi.adminList({
+        status: tab,
+        page: pg,
+        limit: 25,
+      })
+      setComments(res.data)
+      setTotal(res.meta.total)
+      setTotalPages(res.meta.totalPages)
     } catch {
-      setComments([]);
+      setComments([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const fetchPendingCount = useCallback(async () => {
     try {
-      const { count } = await commentsApi.pendingCount();
-      setPendingCount(count);
-    } catch { /* non-critical */ }
-  }, []);
+      const { count } = await commentsApi.pendingCount()
+      setPendingCount(count)
+    } catch {
+      /* non-critical */
+    }
+  }, [])
 
   useEffect(() => {
-    void fetchComments(activeTab, page);
-  }, [activeTab, page, fetchComments]);
+    void fetchComments(activeTab, page)
+  }, [activeTab, page, fetchComments])
 
   useEffect(() => {
-    void fetchPendingCount();
-  }, [fetchPendingCount, comments]); // refresh badge after any mutation
+    void fetchPendingCount()
+  }, [fetchPendingCount, comments]) // refresh badge after any mutation
 
   const switchTab = (tab: CommentStatus) => {
-    setActiveTab(tab);
-    setPage(1);
-  };
+    setActiveTab(tab)
+    setPage(1)
+  }
 
   const toggleOne = (id: string) =>
     setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
 
   const toggleAll = () =>
     setSelected((prev) =>
-      prev.size === comments.length
-        ? new Set()
-        : new Set(comments.map((c) => c.id))
-    );
+      prev.size === comments.length ? new Set() : new Set(comments.map((c) => c.id)),
+    )
 
   const runBulk = async (action: "approve" | "reject" | "spam" | "delete", ids?: string[]) => {
-    const targets = ids ?? [...selected];
-    if (targets.length === 0) return;
-    setActionBusy(true);
+    const targets = ids ?? [...selected]
+    if (targets.length === 0) return
+    setActionBusy(true)
     try {
-      const { affected } = await commentsApi.bulk(action, targets);
-      showToast(`${affected} comment${affected !== 1 ? "s" : ""} ${action}d.`);
-      void fetchComments(activeTab, page);
+      const { affected } = await commentsApi.bulk(action, targets)
+      showToast(`${affected} comment${affected !== 1 ? "s" : ""} ${action}d.`)
+      void fetchComments(activeTab, page)
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Action failed.");
+      showToast(err instanceof Error ? err.message : "Action failed.")
     } finally {
-      setActionBusy(false);
+      setActionBusy(false)
     }
-  };
+  }
 
   const runSingle = async (id: string, action: "approve" | "reject" | "spam" | "delete") => {
-    setActionBusy(true);
+    setActionBusy(true)
     try {
       if (action === "delete") {
-        await commentsApi.delete(id);
-        showToast("Comment deleted.");
+        await commentsApi.delete(id)
+        showToast("Comment deleted.")
       } else {
-        const statusMap = { approve: "APPROVED", reject: "REJECTED", spam: "SPAM" } as const;
-        await commentsApi.moderate(id, statusMap[action]);
-        showToast(`Comment marked as ${statusMap[action].toLowerCase()}.`);
+        const statusMap = {
+          approve: "APPROVED",
+          reject: "REJECTED",
+          spam: "SPAM",
+        } as const
+        await commentsApi.moderate(id, statusMap[action])
+        showToast(`Comment marked as ${statusMap[action].toLowerCase()}.`)
       }
-      void fetchComments(activeTab, page);
+      void fetchComments(activeTab, page)
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Action failed.");
+      showToast(err instanceof Error ? err.message : "Action failed.")
     } finally {
-      setActionBusy(false);
+      setActionBusy(false)
     }
-  };
+  }
 
-  const allSelected = comments.length > 0 && selected.size === comments.length;
+  const allSelected = comments.length > 0 && selected.size === comments.length
 
   return (
     <Layout admin>
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-brand-500/40
+        <div
+          className="fixed bottom-6 right-6 z-50 rounded-xl border border-brand-500/40
                         bg-slate-900 px-5 py-3 text-sm text-slate-200 shadow-xl
-                        shadow-black/40 animate-fade-in">
+                        shadow-black/40 animate-fade-in"
+        >
           {toast}
         </div>
       )}
@@ -140,13 +153,13 @@ const CommentsAdmin: React.FC = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">Comments</h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Moderate reader comments across all posts
-          </p>
+          <p className="mt-0.5 text-sm text-slate-500">Moderate reader comments across all posts</p>
         </div>
         {pendingCount > 0 && (
-          <span className="rounded-full bg-yellow-500/15 border border-yellow-500/30
-                           px-3 py-1 text-sm font-medium text-yellow-400">
+          <span
+            className="rounded-full bg-yellow-500/15 border border-yellow-500/30
+                           px-3 py-1 text-sm font-medium text-yellow-400"
+          >
             {pendingCount} awaiting review
           </span>
         )}
@@ -166,8 +179,10 @@ const CommentsAdmin: React.FC = () => {
           >
             {label}
             {key === "PENDING" && pendingCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-yellow-500 px-1.5 py-0.5
-                               text-[10px] font-bold text-black">
+              <span
+                className="ml-1.5 rounded-full bg-yellow-500 px-1.5 py-0.5
+                               text-[10px] font-bold text-black"
+              >
                 {pendingCount}
               </span>
             )}
@@ -235,7 +250,12 @@ const CommentsAdmin: React.FC = () => {
             {activeTab === "PENDING" && (
               <button
                 disabled={actionBusy}
-                onClick={() => void runBulk("approve", comments.map((c) => c.id))}
+                onClick={() =>
+                  void runBulk(
+                    "approve",
+                    comments.map((c) => c.id),
+                  )
+                }
                 className="ml-1 rounded-lg bg-brand-600/20 border border-brand-500/30 px-3 py-1.5
                            text-xs font-medium text-brand-300 hover:bg-brand-600/30
                            disabled:opacity-50 transition-colors"
@@ -276,8 +296,10 @@ const CommentsAdmin: React.FC = () => {
                 className="mt-1 h-4 w-4 shrink-0 rounded border-slate-600 bg-slate-800 text-brand-500"
               />
 
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full
-                              bg-brand-700/50 text-xs font-bold text-brand-200">
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+                              bg-brand-700/50 text-xs font-bold text-brand-200"
+              >
                 {comment.authorName.charAt(0).toUpperCase()}
               </div>
 
@@ -291,9 +313,7 @@ const CommentsAdmin: React.FC = () => {
                   >
                     {comment.status}
                   </span>
-                  {comment.parentId && (
-                    <span className="text-[10px] text-slate-600">↩ reply</span>
-                  )}
+                  {comment.parentId && <span className="text-[10px] text-slate-600">↩ reply</span>}
                   <span className="ml-auto text-xs text-slate-600">{fmt(comment.createdAt)}</span>
                 </div>
 
@@ -391,7 +411,7 @@ const CommentsAdmin: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
-export default CommentsAdmin;
+export default CommentsAdmin

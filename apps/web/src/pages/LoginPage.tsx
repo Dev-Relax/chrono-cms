@@ -1,34 +1,34 @@
-import React, { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.js";
-import { ApiError } from "../lib/api.js";
+import React, { useState } from "react"
+import { useNavigate, Navigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext.js"
+import { ApiError } from "../lib/api.js"
 
 const LoginPage: React.FC = () => {
-  const { state, login } = useAuth();
-  const navigate = useNavigate();
+  const { state, login } = useAuth()
+  const navigate = useNavigate()
 
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState<string | null>(null);
-  const [loading, setLoading]   = useState(false);
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   if (state.status === "authenticated") {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/admin" replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
     try {
-      await login(email, password);
-      navigate("/admin");
+      await login(email, password)
+      navigate("/admin")
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      setError(err instanceof ApiError ? err.message : "Login failed")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
@@ -46,10 +46,7 @@ const LoginPage: React.FC = () => {
           className="rounded-xl border border-slate-800 bg-slate-900 p-8 shadow-2xl space-y-5"
         >
           <div>
-            <label
-              htmlFor="email"
-              className="block mb-1.5 text-sm font-medium text-slate-300"
-            >
+            <label htmlFor="email" className="block mb-1.5 text-sm font-medium text-slate-300">
               Email
             </label>
             <input
@@ -67,10 +64,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block mb-1.5 text-sm font-medium text-slate-300"
-            >
+            <label htmlFor="password" className="block mb-1.5 text-sm font-medium text-slate-300">
               Password
             </label>
             <input
@@ -105,7 +99,7 @@ const LoginPage: React.FC = () => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

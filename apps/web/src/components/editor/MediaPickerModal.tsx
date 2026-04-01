@@ -1,54 +1,53 @@
-import React, { useEffect, useRef, useState } from "react";
-import { mediaApi, resolveMediaUrl } from "../../lib/api.js";
-import type { MediaFile } from "../../types/index.js";
+import React, { useEffect, useRef, useState } from "react"
+import { mediaApi, resolveMediaUrl } from "../../lib/api.js"
+import type { MediaFile } from "../../types/index.js"
 
 export type ImageSelection = {
-  kind:    "image";
-  url:     string;
-  alt:     string;
-  caption: string;
-};
+  kind: "image"
+  url: string
+  alt: string
+  caption: string
+}
 
 export type FileSelection = {
-  kind:     "file";
-  url:      string;
-  filename: string;
-  size:     number;
-  mimeType: string;
-};
+  kind: "file"
+  url: string
+  filename: string
+  size: number
+  mimeType: string
+}
 
 type Props = {
   /** Called when the user confirms an image selection. */
-  onSelectImage?: (sel: ImageSelection) => void;
+  onSelectImage?: (sel: ImageSelection) => void
   /** Called when the user confirms a file selection. */
-  onSelectFile?:  (sel: FileSelection)  => void;
+  onSelectFile?: (sel: FileSelection) => void
   /** Legacy: called with resolved URL only (image mode) */
-  onSelect?:      (url: string) => void;
-  onClose: () => void;
+  onSelect?: (url: string) => void
+  onClose: () => void
   /** If true, only show image tabs (default: both) */
-  imagesOnly?: boolean;
-};
+  imagesOnly?: boolean
+}
 
-type Tab = "library" | "files" | "url";
+type Tab = "library" | "files" | "url"
 
 const isImage = (f: MediaFile) =>
-  f.mimeType?.startsWith("image/") ||
-  /\.(webp|jpg|jpeg|png|gif|svg|avif)$/i.test(f.filename);
+  f.mimeType?.startsWith("image/") || /\.(webp|jpg|jpeg|png|gif|svg|avif)$/i.test(f.filename)
 
 const formatBytes = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const fileIcon = (mimeType = ""): string => {
-  if (mimeType.includes("pdf"))                                   return "📄";
-  if (mimeType.includes("zip") || mimeType.includes("compress"))  return "🗜";
-  if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
-  if (mimeType.includes("sheet") || mimeType.includes("excel"))   return "📊";
-  if (mimeType.includes("presentation"))                          return "📑";
-  return "📎";
-};
+  if (mimeType.includes("pdf")) return "📄"
+  if (mimeType.includes("zip") || mimeType.includes("compress")) return "🗜"
+  if (mimeType.includes("word") || mimeType.includes("document")) return "📝"
+  if (mimeType.includes("sheet") || mimeType.includes("excel")) return "📊"
+  if (mimeType.includes("presentation")) return "📑"
+  return "📎"
+}
 
 export const MediaPickerModal: React.FC<Props> = ({
   onSelectImage,
@@ -57,77 +56,86 @@ export const MediaPickerModal: React.FC<Props> = ({
   onClose,
   imagesOnly = false,
 }) => {
-  const [tab, setTab]           = useState<Tab>("library");
-  const [files, setFiles]       = useState<MediaFile[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [url, setUrl]           = useState("https://");
-  const [alt, setAlt]           = useState("");
-  const [caption, setCaption]   = useState("");
-  const [selected, setSelected] = useState<MediaFile | null>(null);
-  const [imageAlt, setImageAlt] = useState("");
-  const [imageCap, setImageCap] = useState("");
-  const urlRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<Tab>("library")
+  const [files, setFiles] = useState<MediaFile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [url, setUrl] = useState("https://")
+  const [alt, setAlt] = useState("")
+  const [caption, setCaption] = useState("")
+  const [selected, setSelected] = useState<MediaFile | null>(null)
+  const [imageAlt, setImageAlt] = useState("")
+  const [imageCap, setImageCap] = useState("")
+  const urlRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    mediaApi.list()
+    mediaApi
+      .list()
       .then(({ data }) => setFiles(data))
-      .catch(() => { /* show empty state */ })
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        /* show empty state */
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
-    if (tab === "url") urlRef.current?.focus();
-  }, [tab]);
+    if (tab === "url") urlRef.current?.focus()
+  }, [tab])
 
   const confirmImage = (rawUrl: string, altText: string, cap: string) => {
-    const resolved = resolveMediaUrl(rawUrl);
-    if (onSelectImage) onSelectImage({ kind: "image", url: resolved, alt: altText, caption: cap });
-    else if (onSelect)  onSelect(resolved);
-    onClose();
-  };
+    const resolved = resolveMediaUrl(rawUrl)
+    if (onSelectImage)
+      onSelectImage({
+        kind: "image",
+        url: resolved,
+        alt: altText,
+        caption: cap,
+      })
+    else if (onSelect) onSelect(resolved)
+    onClose()
+  }
 
   const confirmFile = (f: MediaFile) => {
-    const resolved = resolveMediaUrl(f.url);
+    const resolved = resolveMediaUrl(f.url)
     if (onSelectFile) {
       onSelectFile({
-        kind:     "file",
-        url:      resolved,
+        kind: "file",
+        url: resolved,
         filename: f.originalName ?? f.filename,
-        size:     f.size,
+        size: f.size,
         mimeType: f.mimeType ?? "application/octet-stream",
-      });
+      })
     }
-    onClose();
-  };
+    onClose()
+  }
 
   const handleUrlSubmit = () => {
-    if (url.trim() && url !== "https://") confirmImage(url.trim(), alt, caption);
-  };
+    if (url.trim() && url !== "https://") confirmImage(url.trim(), alt, caption)
+  }
 
   const pickImage = (f: MediaFile) => {
     if (onSelectImage) {
       // Show alt/caption form before confirming
-      setSelected(f);
-      setImageAlt("");
-      setImageCap("");
+      setSelected(f)
+      setImageAlt("")
+      setImageCap("")
     } else {
-      confirmImage(f.url, "", "");
+      confirmImage(f.url, "", "")
     }
-  };
+  }
 
   const confirmSelected = () => {
-    if (!selected) return;
-    confirmImage(selected.url, imageAlt, imageCap);
-  };
+    if (!selected) return
+    confirmImage(selected.url, imageAlt, imageCap)
+  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "library", label: "Images" },
     ...(!imagesOnly ? [{ id: "files" as Tab, label: "Files" }] : []),
-    { id: "url",     label: "External URL" },
-  ];
+    { id: "url", label: "External URL" },
+  ]
 
-  const imageFiles = files.filter(isImage);
-  const docFiles   = files.filter((f) => !isImage(f));
+  const imageFiles = files.filter(isImage)
+  const docFiles = files.filter((f) => !isImage(f))
 
   return (
     <div
@@ -140,8 +148,13 @@ export const MediaPickerModal: React.FC<Props> = ({
       >
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3.5">
           <h2 className="text-sm font-semibold text-slate-200">Insert Media</h2>
-          <button type="button" onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors text-lg leading-none">✕</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-500 hover:text-white transition-colors text-lg leading-none"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="flex border-b border-slate-800">
@@ -149,7 +162,10 @@ export const MediaPickerModal: React.FC<Props> = ({
             <button
               key={t.id}
               type="button"
-              onClick={() => { setTab(t.id); setSelected(null); }}
+              onClick={() => {
+                setTab(t.id)
+                setSelected(null)
+              }}
               className={[
                 "px-5 py-2.5 text-xs font-semibold transition-colors",
                 tab === t.id
@@ -163,9 +179,8 @@ export const MediaPickerModal: React.FC<Props> = ({
         </div>
 
         <div className="min-h-[240px] max-h-[460px] overflow-y-auto p-5">
-
-          {tab === "library" && (
-            selected ? (
+          {tab === "library" &&
+            (selected ? (
               /* Alt text + caption step */
               <div className="space-y-4 pt-1">
                 <div className="flex gap-4">
@@ -177,7 +192,10 @@ export const MediaPickerModal: React.FC<Props> = ({
                   <div className="flex-1 space-y-3">
                     <div>
                       <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                        Alt text <span className="normal-case text-slate-600">(recommended for SEO & accessibility)</span>
+                        Alt text{" "}
+                        <span className="normal-case text-slate-600">
+                          (recommended for SEO & accessibility)
+                        </span>
                       </label>
                       <input
                         autoFocus
@@ -192,13 +210,18 @@ export const MediaPickerModal: React.FC<Props> = ({
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                        Caption <span className="normal-case text-slate-600">(optional, shown below image)</span>
+                        Caption{" "}
+                        <span className="normal-case text-slate-600">
+                          (optional, shown below image)
+                        </span>
                       </label>
                       <input
                         type="text"
                         value={imageCap}
                         onChange={(e) => setImageCap(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") confirmSelected(); }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") confirmSelected()
+                        }}
                         placeholder="Photo by…"
                         className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2
                                    text-sm text-slate-100 placeholder-slate-600
@@ -208,12 +231,18 @@ export const MediaPickerModal: React.FC<Props> = ({
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setSelected(null)}
-                    className="rounded-lg px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="rounded-lg px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  >
                     Back
                   </button>
-                  <button type="button" onClick={confirmSelected}
-                    className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors">
+                  <button
+                    type="button"
+                    onClick={confirmSelected}
+                    className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                  >
                     Insert Image
                   </button>
                 </div>
@@ -243,8 +272,10 @@ export const MediaPickerModal: React.FC<Props> = ({
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center
-                                    bg-brand-600/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                      className="absolute inset-0 flex items-center justify-center
+                                    bg-brand-600/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       <span className="rounded bg-brand-600 px-2 py-0.5 text-xs font-semibold text-white">
                         Select
                       </span>
@@ -252,18 +283,15 @@ export const MediaPickerModal: React.FC<Props> = ({
                   </button>
                 ))}
               </div>
-            )
-          )}
+            ))}
 
-          {tab === "files" && (
-            loading ? (
+          {tab === "files" &&
+            (loading ? (
               <div className="flex justify-center py-16">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
               </div>
             ) : docFiles.length === 0 ? (
-              <p className="py-16 text-center text-sm text-slate-500">
-                No files uploaded yet.
-              </p>
+              <p className="py-16 text-center text-sm text-slate-500">No files uploaded yet.</p>
             ) : (
               <div className="space-y-2">
                 {docFiles.map((file) => (
@@ -285,8 +313,7 @@ export const MediaPickerModal: React.FC<Props> = ({
                   </button>
                 ))}
               </div>
-            )
-          )}
+            ))}
 
           {tab === "url" && (
             <div className="space-y-4 pt-2">
@@ -300,8 +327,8 @@ export const MediaPickerModal: React.FC<Props> = ({
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleUrlSubmit();
-                    if (e.key === "Escape") onClose();
+                    if (e.key === "Enter") handleUrlSubmit()
+                    if (e.key === "Escape") onClose()
                   }}
                   placeholder="https://example.com/image.jpg"
                   className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2
@@ -331,7 +358,9 @@ export const MediaPickerModal: React.FC<Props> = ({
                   type="text"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleUrlSubmit(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleUrlSubmit()
+                  }}
                   placeholder="Photo by…"
                   className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2
                              text-sm text-slate-100 placeholder-slate-600
@@ -351,5 +380,5 @@ export const MediaPickerModal: React.FC<Props> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -9,23 +9,29 @@
 }
 
 @keyframes adminPageEnter {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Theme CSS variables (defaults match the dark slate palette) ─────────────
    Overridden at runtime by ThemeContext.applyThemeToDom()
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  --color-primary:     #6366f1;
-  --color-bg:          #020617;
-  --color-surface:     #0f172a;
+  --color-primary: #6366f1;
+  --color-bg: #020617;
+  --color-surface: #0f172a;
   /* RGB channel triplets — used by Tailwind's brand palette for opacity modifiers */
-  --color-primary-rgb: 99 102 241;   /* #6366f1 */
-  --color-bg-rgb:      2 6 23;       /* #020617 */
-  --color-surface-rgb: 15 23 42;     /* #0f172a */
-  --font-main: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --color-primary-rgb: 99 102 241; /* #6366f1 */
+  --color-bg-rgb: 2 6 23; /* #020617 */
+  --color-surface-rgb: 15 23 42; /* #0f172a */
+  --font-main: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 /* ── Base resets ─────────────────────────────────────────── */
@@ -65,17 +71,31 @@
   }
 
   /* Headings */
-  .ProseMirror h1 { @apply text-3xl font-bold mt-8 mb-3 text-slate-50; }
-  .ProseMirror h2 { @apply text-2xl font-semibold mt-6 mb-2 text-slate-50; }
-  .ProseMirror h3 { @apply text-xl font-semibold mt-5 mb-2 text-slate-100; }
+  .ProseMirror h1 {
+    @apply text-3xl font-bold mt-8 mb-3 text-slate-50;
+  }
+  .ProseMirror h2 {
+    @apply text-2xl font-semibold mt-6 mb-2 text-slate-50;
+  }
+  .ProseMirror h3 {
+    @apply text-xl font-semibold mt-5 mb-2 text-slate-100;
+  }
 
   /* Paragraphs */
-  .ProseMirror p  { @apply leading-7 text-slate-300 mb-4; }
+  .ProseMirror p {
+    @apply leading-7 text-slate-300 mb-4;
+  }
 
   /* Text alignment (set via TextAlign extension as inline style) */
-  .ProseMirror [style*="text-align: center"] { text-align: center; }
-  .ProseMirror [style*="text-align: right"]  { text-align: right; }
-  .ProseMirror [style*="text-align: justify"] { text-align: justify; }
+  .ProseMirror [style*="text-align: center"] {
+    text-align: center;
+  }
+  .ProseMirror [style*="text-align: right"] {
+    text-align: right;
+  }
+  .ProseMirror [style*="text-align: justify"] {
+    text-align: justify;
+  }
 
   /* Inline code */
   .ProseMirror code {
@@ -96,9 +116,15 @@
   }
 
   /* Lists */
-  .ProseMirror ul { @apply list-disc pl-5 mb-4 text-slate-300; }
-  .ProseMirror ol { @apply list-decimal pl-5 mb-4 text-slate-300; }
-  .ProseMirror li { @apply mb-1; }
+  .ProseMirror ul {
+    @apply list-disc pl-5 mb-4 text-slate-300;
+  }
+  .ProseMirror ol {
+    @apply list-decimal pl-5 mb-4 text-slate-300;
+  }
+  .ProseMirror li {
+    @apply mb-1;
+  }
 
   /* Selection highlight */
   .ProseMirror ::selection {

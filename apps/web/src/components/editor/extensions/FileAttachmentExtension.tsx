@@ -1,32 +1,34 @@
-import React from "react";
-import { Node, mergeAttributes } from "@tiptap/core";
-import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
-import type { NodeViewProps } from "@tiptap/react";
+import React from "react"
+import { Node, mergeAttributes } from "@tiptap/core"
+import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react"
+import type { NodeViewProps } from "@tiptap/react"
 
 const formatBytes = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const fileIcon = (mimeType: string): string => {
-  if (mimeType.includes("pdf"))                              return "📄";
-  if (mimeType.includes("zip") || mimeType.includes("compressed") || mimeType.includes("tar")) return "🗜";
-  if (mimeType.includes("word") || mimeType.includes("document"))                              return "📝";
-  if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("sheet")) return "📊";
-  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))                    return "📑";
-  if (mimeType.includes("audio"))                           return "🎵";
-  if (mimeType.includes("video"))                           return "🎬";
-  return "📎";
-};
+  if (mimeType.includes("pdf")) return "📄"
+  if (mimeType.includes("zip") || mimeType.includes("compressed") || mimeType.includes("tar"))
+    return "🗜"
+  if (mimeType.includes("word") || mimeType.includes("document")) return "📝"
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("sheet"))
+    return "📊"
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return "📑"
+  if (mimeType.includes("audio")) return "🎵"
+  if (mimeType.includes("video")) return "🎬"
+  return "📎"
+}
 
 const FileAttachmentView: React.FC<NodeViewProps> = ({ node, deleteNode, selected }) => {
   const { href, filename, size, mimeType } = node.attrs as {
-    href: string;
-    filename: string;
-    size: number;
-    mimeType: string;
-  };
+    href: string
+    filename: string
+    size: number
+    mimeType: string
+  }
 
   return (
     <NodeViewWrapper>
@@ -34,9 +36,7 @@ const FileAttachmentView: React.FC<NodeViewProps> = ({ node, deleteNode, selecte
         className={[
           "group flex items-center gap-3 my-3 rounded-lg border px-4 py-3",
           "bg-slate-800/50 transition-colors select-none",
-          selected
-            ? "border-brand-500"
-            : "border-slate-700 hover:border-slate-600",
+          selected ? "border-brand-500" : "border-slate-700 hover:border-slate-600",
         ].join(" ")}
       >
         <span className="text-2xl shrink-0">{fileIcon(mimeType)}</span>
@@ -61,7 +61,10 @@ const FileAttachmentView: React.FC<NodeViewProps> = ({ node, deleteNode, selecte
           {selected && (
             <button
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); deleteNode(); }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                deleteNode()
+              }}
               className="rounded px-1.5 py-1 text-xs text-red-400 hover:text-red-300 transition-colors"
             >
               ✕
@@ -70,8 +73,8 @@ const FileAttachmentView: React.FC<NodeViewProps> = ({ node, deleteNode, selecte
         </div>
       </div>
     </NodeViewWrapper>
-  );
-};
+  )
+}
 
 export const FileAttachmentExtension = Node.create({
   name: "fileAttachment",
@@ -80,25 +83,27 @@ export const FileAttachmentExtension = Node.create({
 
   addAttributes() {
     return {
-      href:     { default: "" },
+      href: { default: "" },
       filename: { default: "file" },
-      size:     { default: 0 },
+      size: { default: 0 },
       mimeType: { default: "application/octet-stream" },
-    };
+    }
   },
 
   parseHTML() {
-    return [{ tag: "div[data-file-attachment]" }];
+    return [{ tag: "div[data-file-attachment]" }]
   },
 
   renderHTML({ node, HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(HTMLAttributes, { "data-file-attachment": node.attrs["href"] as string }),
-    ];
+      mergeAttributes(HTMLAttributes, {
+        "data-file-attachment": node.attrs["href"] as string,
+      }),
+    ]
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(FileAttachmentView);
+    return ReactNodeViewRenderer(FileAttachmentView)
   },
-});
+})

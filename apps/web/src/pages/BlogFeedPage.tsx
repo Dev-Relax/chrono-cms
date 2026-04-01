@@ -1,77 +1,82 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { postsApi } from "../lib/api.js";
-import type { Post, Tag } from "../types/index.js";
-import type { CardStyle, SidebarWidget } from "../types/index.js";
-import { DEFAULT_SIDEBAR_WIDGETS } from "../types/index.js";
-import { Layout } from "../components/common/Layout.js";
-import { useTheme } from "../context/ThemeContext.js";
-import { readingTimeLabel } from "../lib/readingTime.js";
-import { Sk } from "../components/common/Skeleton.js";
+import React, { useEffect, useRef, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { postsApi } from "../lib/api.js"
+import type { Post, Tag } from "../types/index.js"
+import type { CardStyle, SidebarWidget } from "../types/index.js"
+import { DEFAULT_SIDEBAR_WIDGETS } from "../types/index.js"
+import { Layout } from "../components/common/Layout.js"
+import { useTheme } from "../context/ThemeContext.js"
+import { readingTimeLabel } from "../lib/readingTime.js"
+import { Sk } from "../components/common/Skeleton.js"
 
 const BlogFeedPage: React.FC = () => {
-  const [posts, setPosts]           = useState<Post[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [showSkeleton, setShowSkeleton] = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [searchQuery, setSearch]    = useState("");
-  const [searchResults, setResults] = useState<Post[] | null>(null);
-  const [searching, setSearching]   = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showSkeleton, setShowSkeleton] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearch] = useState("")
+  const [searchResults, setResults] = useState<Post[] | null>(null)
+  const [searching, setSearching] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Only reveal the skeleton if the API hasn't responded within 150 ms.
   // Fast responses skip the skeleton entirely; posts just fade in.
   useEffect(() => {
-    if (!loading) { setShowSkeleton(false); return; }
-    const t = setTimeout(() => setShowSkeleton(true), 150);
-    return () => clearTimeout(t);
-  }, [loading]);
+    if (!loading) {
+      setShowSkeleton(false)
+      return
+    }
+    const t = setTimeout(() => setShowSkeleton(true), 150)
+    return () => clearTimeout(t)
+  }, [loading])
 
-  const { savedTheme, savedBrand } = useTheme();
-  const { cardStyle, showSidebar, sidebarWidgets } = savedTheme.layout;
-  const widgets = sidebarWidgets ?? DEFAULT_SIDEBAR_WIDGETS;
+  const { savedTheme, savedBrand } = useTheme()
+  const { cardStyle, showSidebar, sidebarWidgets } = savedTheme.layout
+  const widgets = sidebarWidgets ?? DEFAULT_SIDEBAR_WIDGETS
 
   useEffect(() => {
     postsApi
       .list({ limit: 20 })
       .then(({ data }) => setPosts(data))
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
   // Debounced search
   const handleSearch = (q: string) => {
-    setSearch(q);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!q.trim()) { setResults(null); return; }
-    setSearching(true);
+    setSearch(q)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!q.trim()) {
+      setResults(null)
+      return
+    }
+    setSearching(true)
     debounceRef.current = setTimeout(() => {
-      postsApi.search(q)
+      postsApi
+        .search(q)
         .then(({ data }) => setResults(data))
         .catch(() => setResults([]))
-        .finally(() => setSearching(false));
-    }, 300);
-  };
+        .finally(() => setSearching(false))
+    }, 300)
+  }
 
   // Collect unique tags from fetched posts for the sidebar
   const uniqueTags: Tag[] = [
     ...new Map(
-      posts.flatMap(({ tags }) => tags.map(({ tag }) => [tag.id, tag] as [string, Tag]))
+      posts.flatMap(({ tags }) => tags.map(({ tag }) => [tag.id, tag] as [string, Tag])),
     ).values(),
-  ];
+  ]
 
   // What to render in the feed column
-  const displayPosts = searchResults ?? posts;
-  const isSearchActive = searchQuery.trim().length > 0;
+  const displayPosts = searchResults ?? posts
+  const isSearchActive = searchQuery.trim().length > 0
 
   return (
     <Layout>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-50">{savedBrand.siteName}</h1>
-          {savedBrand.tagline && (
-            <p className="mt-2 text-slate-500">{savedBrand.tagline}</p>
-          )}
+          {savedBrand.tagline && <p className="mt-2 text-slate-500">{savedBrand.tagline}</p>}
         </div>
         {/* Search bar */}
         <div className="relative w-full max-w-xs">
@@ -96,8 +101,11 @@ const BlogFeedPage: React.FC = () => {
       {showSkeleton && (
         <div className="flex flex-col gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-slate-800 p-5"
-                 style={{ backgroundColor: "rgb(var(--color-surface-rgb) / 0.6)" }}>
+            <div
+              key={i}
+              className="rounded-xl border border-slate-800 p-5"
+              style={{ backgroundColor: "rgb(var(--color-surface-rgb) / 0.6)" }}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-2">
                   <div className="flex gap-2">
@@ -128,13 +136,17 @@ const BlogFeedPage: React.FC = () => {
       )}
 
       {isSearchActive && !searching && searchResults?.length === 0 && (
-        <p className="text-slate-500 text-center py-20">No posts match &ldquo;{searchQuery}&rdquo;.</p>
+        <p className="text-slate-500 text-center py-20">
+          No posts match &ldquo;{searchQuery}&rdquo;.
+        </p>
       )}
 
       {displayPosts.length > 0 && (
         <div className={`admin-page-enter ${showSidebar ? "flex gap-8 items-start" : ""}`}>
           <div className="flex-1 min-w-0">
-            <div className={cardStyle === "grid" ? "grid sm:grid-cols-2 gap-6" : "flex flex-col gap-4"}>
+            <div
+              className={cardStyle === "grid" ? "grid sm:grid-cols-2 gap-6" : "flex flex-col gap-4"}
+            >
               {displayPosts.map((post) => (
                 <PostCard key={post.id} post={post} layout={cardStyle} />
               ))}
@@ -158,32 +170,34 @@ const BlogFeedPage: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
-type PostCardProps = { post: Post; layout: CardStyle };
+type PostCardProps = { post: Post; layout: CardStyle }
 
 const articleBase = {
   onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.backgroundColor = "var(--color-surface)";
+    e.currentTarget.style.backgroundColor = "var(--color-surface)"
   },
   onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.backgroundColor = "rgb(var(--color-surface-rgb) / 0.6)";
+    e.currentTarget.style.backgroundColor = "rgb(var(--color-surface-rgb) / 0.6)"
   },
-} as const;
+} as const
 
 const PostCard: React.FC<PostCardProps> = ({ post, layout }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const date = new Date(post.publishedAt ?? post.createdAt).toLocaleDateString("en-US", {
-    year: "numeric", month: "short", day: "numeric",
-  });
-  const firstTag = post.tags[0]?.tag;
-  const readTime = readingTimeLabel(post.content);
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+  const firstTag = post.tags[0]?.tag
+  const readTime = readingTimeLabel(post.content)
 
   const goToPost = (e: React.MouseEvent) => {
-    e.preventDefault();
-    React.startTransition(() => navigate(`/posts/${post.slug}`));
-  };
+    e.preventDefault()
+    React.startTransition(() => navigate(`/posts/${post.slug}`))
+  }
 
   if (layout === "grid") {
     return (
@@ -236,7 +250,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, layout }) => {
           </Link>
         </div>
       </article>
-    );
+    )
   }
 
   // List layout
@@ -277,19 +291,19 @@ const PostCard: React.FC<PostCardProps> = ({ post, layout }) => {
         </div>
       </div>
     </article>
-  );
-};
+  )
+}
 
 const sidebarCard = {
   className: "rounded-xl border border-slate-800 p-4",
   style: { backgroundColor: "rgb(var(--color-surface-rgb) / 0.6)" },
-} as const;
+} as const
 
 type WidgetProps = {
-  widget: SidebarWidget;
-  tags:   Tag[];
-  posts:  Post[];
-};
+  widget: SidebarWidget
+  tags: Tag[]
+  posts: Post[]
+}
 
 const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) => {
   switch (widget.type) {
@@ -303,10 +317,10 @@ const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) =
             {widget.text ?? "A blog built with Chronos CMS."}
           </p>
         </div>
-      );
+      )
 
     case "tags":
-      if (tags.length === 0) return null;
+      if (tags.length === 0) return null
       return (
         <div {...sidebarCard}>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -324,11 +338,11 @@ const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) =
             ))}
           </div>
         </div>
-      );
+      )
 
     case "recent_posts": {
-      const recent = posts.slice(0, widget.count ?? 5);
-      if (recent.length === 0) return null;
+      const recent = posts.slice(0, widget.count ?? 5)
+      if (recent.length === 0) return null
       return (
         <div {...sidebarCard}>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -347,12 +361,12 @@ const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) =
             ))}
           </ul>
         </div>
-      );
+      )
     }
 
     case "social_links": {
-      const links = (widget.links ?? []).filter((l) => l.url);
-      if (links.length === 0) return null;
+      const links = (widget.links ?? []).filter((l) => l.url)
+      if (links.length === 0) return null
       return (
         <div {...sidebarCard}>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -373,11 +387,11 @@ const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) =
             ))}
           </div>
         </div>
-      );
+      )
     }
 
     case "custom_text":
-      if (!widget.text) return null;
+      if (!widget.text) return null
       return (
         <div {...sidebarCard}>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -387,11 +401,11 @@ const SidebarWidgetRenderer: React.FC<WidgetProps> = ({ widget, tags, posts }) =
             {widget.text}
           </p>
         </div>
-      );
+      )
 
     default:
-      return null;
+      return null
   }
-};
+}
 
-export default BlogFeedPage;
+export default BlogFeedPage

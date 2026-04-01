@@ -1,33 +1,31 @@
-import React from "react";
-import type { Editor } from "@tiptap/react";
+import React from "react"
+import type { Editor } from "@tiptap/react"
 
-type Props = { editor: Editor };
+type Props = { editor: Editor }
 
 type ButtonProps = {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-};
+  active: boolean
+  onClick: () => void
+  title: string
+  children: React.ReactNode
+}
 
 const MenuButton: React.FC<ButtonProps> = ({ active, onClick, title, children }) => (
   <button
     type="button"
     onMouseDown={(e) => {
-      e.preventDefault(); // prevent editor losing focus
-      onClick();
+      e.preventDefault() // prevent editor losing focus
+      onClick()
     }}
     title={title}
     className={[
       "px-2 py-1 rounded text-xs font-medium transition-colors",
-      active
-        ? "bg-brand-500 text-white"
-        : "text-slate-300 hover:bg-slate-700 hover:text-white",
+      active ? "bg-brand-500 text-white" : "text-slate-300 hover:bg-slate-700 hover:text-white",
     ].join(" ")}
   >
     {children}
   </button>
-);
+)
 
 export const BubbleMenuBar: React.FC<Props> = ({ editor }) => (
   <>
@@ -91,4 +89,4 @@ export const BubbleMenuBar: React.FC<Props> = ({ editor }) => (
       H3
     </MenuButton>
   </>
-);
+)

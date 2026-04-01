@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { HexColorPicker } from "react-colorful";
-import { useTheme } from "../../context/ThemeContext.js";
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { Link } from "react-router-dom"
+import { HexColorPicker } from "react-colorful"
+import { useTheme } from "../../context/ThemeContext.js"
 import {
   FONT_PAIRS,
   DEFAULT_THEME_CONFIG,
@@ -14,17 +14,17 @@ import {
   type SocialPlatform,
   type ThemeColorConfig,
   type ThemeConfig,
-} from "../../types/index.js";
-import { Layout } from "../../components/common/Layout.js";
-import { Sk } from "../../components/common/Skeleton.js";
-import ThemePreview from "../../components/admin/ThemePreview.js";
-import { THEME_PRESETS } from "../../lib/themePresets.js";
-import type { ThemePreset } from "../../lib/themePresets.js";
+} from "../../types/index.js"
+import { Layout } from "../../components/common/Layout.js"
+import { Sk } from "../../components/common/Skeleton.js"
+import ThemePreview from "../../components/admin/ThemePreview.js"
+import { THEME_PRESETS } from "../../lib/themePresets.js"
+import type { ThemePreset } from "../../lib/themePresets.js"
 
 const PresetCard: React.FC<{
-  preset:   ThemePreset;
-  isActive: boolean;
-  onSelect: () => void;
+  preset: ThemePreset
+  isActive: boolean
+  onSelect: () => void
 }> = ({ preset, isActive, onSelect }) => (
   <button
     type="button"
@@ -38,10 +38,7 @@ const PresetCard: React.FC<{
     ].join(" ")}
   >
     {/* Colour preview area */}
-    <div
-      className="relative h-14"
-      style={{ backgroundColor: preset.config.colors.background }}
-    >
+    <div className="relative h-14" style={{ backgroundColor: preset.config.colors.background }}>
       <div
         className="absolute inset-x-0 top-0 h-1"
         style={{ backgroundColor: preset.config.colors.primary }}
@@ -63,26 +60,26 @@ const PresetCard: React.FC<{
       </span>
     </div>
   </button>
-);
+)
 
 type ColorPickerProps = {
-  label: string;
-  value: string;
-  onChange: (hex: string) => void;
-};
+  label: string
+  value: string
+  onChange: (hex: string) => void
+}
 
 const ColorSwatch: React.FC<ColorPickerProps> = ({ label, value, onChange }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
 
   return (
     <div className="flex items-center justify-between" ref={ref}>
@@ -112,8 +109,8 @@ const ColorSwatch: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
               type="text"
               value={value}
               onChange={(e) => {
-                const v = e.target.value.trim();
-                if (/^#[0-9a-fA-F]{6}$/.test(v)) onChange(v);
+                const v = e.target.value.trim()
+                if (/^#[0-9a-fA-F]{6}$/.test(v)) onChange(v)
               }}
               className="mt-2 w-full rounded-md border border-slate-700 bg-slate-800 px-2 py-1
                          text-center font-mono text-xs text-slate-200 outline-none
@@ -125,24 +122,22 @@ const ColorSwatch: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-    <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">
-      {title}
-    </h3>
+    <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">{title}</h3>
     <div className="space-y-4">{children}</div>
   </div>
-);
+)
 
 type ToggleGroupProps<T extends string> = {
-  label: string;
-  value: T;
-  options: { value: T; label: string; icon?: string }[];
-  onChange: (v: T) => void;
-};
+  label: string
+  value: T
+  options: { value: T; label: string; icon?: string }[]
+  onChange: (v: T) => void
+}
 
 const ToggleGroup = <T extends string>({
   label,
@@ -171,42 +166,51 @@ const ToggleGroup = <T extends string>({
       ))}
     </div>
   </div>
-);
+)
 
 const WIDGET_META: Record<SidebarWidgetType, { icon: string; label: string }> = {
-  about:        { icon: "👤", label: "About" },
-  tags:         { icon: "🏷️", label: "Topics / Tags" },
+  about: { icon: "👤", label: "About" },
+  tags: { icon: "🏷️", label: "Topics / Tags" },
   recent_posts: { icon: "📄", label: "Recent Posts" },
   social_links: { icon: "🔗", label: "Social Links" },
-  custom_text:  { icon: "✏️", label: "Custom Text" },
-};
+  custom_text: { icon: "✏️", label: "Custom Text" },
+}
 
-const SOCIAL_PLATFORMS: SocialPlatform[] = ["twitter", "github", "linkedin", "instagram", "youtube", "rss"];
+const SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "twitter",
+  "github",
+  "linkedin",
+  "instagram",
+  "youtube",
+  "rss",
+]
 
 const SOCIAL_ICONS: Record<SocialPlatform, string> = {
-  twitter:   "𝕏",
-  github:    "⌥",
-  linkedin:  "in",
+  twitter: "𝕏",
+  github: "⌥",
+  linkedin: "in",
   instagram: "◎",
-  youtube:   "▶",
-  rss:       "◉",
-};
+  youtube: "▶",
+  rss: "◉",
+}
 
 const WidgetRow: React.FC<{
-  widget:   SidebarWidget;
-  index:    number;
-  total:    number;
-  onChange: (w: SidebarWidget) => void;
-  onMove:   (index: number, dir: "up" | "down") => void;
+  widget: SidebarWidget
+  index: number
+  total: number
+  onChange: (w: SidebarWidget) => void
+  onMove: (index: number, dir: "up" | "down") => void
 }> = ({ widget, index, total, onChange, onMove }) => {
-  const [expanded, setExpanded] = useState(false);
-  const meta = WIDGET_META[widget.type];
+  const [expanded, setExpanded] = useState(false)
+  const meta = WIDGET_META[widget.type]
 
   return (
-    <div className={[
-      "rounded-lg border transition-colors",
-      widget.enabled ? "border-slate-700 bg-slate-800/60" : "border-slate-800 bg-slate-900/40",
-    ].join(" ")}>
+    <div
+      className={[
+        "rounded-lg border transition-colors",
+        widget.enabled ? "border-slate-700 bg-slate-800/60" : "border-slate-800 bg-slate-900/40",
+      ].join(" ")}
+    >
       <div className="flex items-center gap-2 px-3 py-2.5">
         <div className="flex flex-col gap-0.5">
           <button
@@ -241,17 +245,21 @@ const WidgetRow: React.FC<{
             widget.enabled ? "bg-brand-600" : "bg-slate-700",
           ].join(" ")}
         >
-          <span className={[
-            "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform",
-            widget.enabled ? "translate-x-5" : "translate-x-0.5",
-          ].join(" ")} />
+          <span
+            className={[
+              "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform",
+              widget.enabled ? "translate-x-5" : "translate-x-0.5",
+            ].join(" ")}
+          />
         </button>
 
         <span className="text-base leading-none">{meta.icon}</span>
-        <span className={[
-          "flex-1 text-sm font-medium",
-          widget.enabled ? "text-slate-200" : "text-slate-500",
-        ].join(" ")}>
+        <span
+          className={[
+            "flex-1 text-sm font-medium",
+            widget.enabled ? "text-slate-200" : "text-slate-500",
+          ].join(" ")}
+        >
           {widget.title}
         </span>
         <span className="text-xs text-slate-600">{meta.label}</span>
@@ -300,7 +308,12 @@ const WidgetRow: React.FC<{
                 min={1}
                 max={10}
                 value={widget.count ?? 5}
-                onChange={(e) => onChange({ ...widget, count: Math.max(1, Math.min(10, Number(e.target.value))) })}
+                onChange={(e) =>
+                  onChange({
+                    ...widget,
+                    count: Math.max(1, Math.min(10, Number(e.target.value))),
+                  })
+                }
                 className="w-24 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5
                            text-sm text-slate-200 outline-none focus:border-brand-500"
               />
@@ -311,7 +324,7 @@ const WidgetRow: React.FC<{
             <div className="space-y-2">
               <label className="block text-xs text-slate-500">Social links</label>
               {SOCIAL_PLATFORMS.map((platform) => {
-                const existing = (widget.links ?? []).find((l) => l.platform === platform);
+                const existing = (widget.links ?? []).find((l) => l.platform === platform)
                 return (
                   <div key={platform} className="flex items-center gap-2">
                     <span className="w-6 text-center text-xs font-bold text-slate-400">
@@ -323,79 +336,85 @@ const WidgetRow: React.FC<{
                       placeholder={`https://${platform}.com/…`}
                       value={existing?.url ?? ""}
                       onChange={(e) => {
-                        const url = e.target.value.trim();
-                        const links = (widget.links ?? []).filter((l) => l.platform !== platform);
-                        if (url) links.push({ platform, url });
-                        onChange({ ...widget, links });
+                        const url = e.target.value.trim()
+                        const links = (widget.links ?? []).filter((l) => l.platform !== platform)
+                        if (url) links.push({ platform, url })
+                        onChange({ ...widget, links })
                       }}
                       className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1
                                  text-xs text-slate-300 outline-none focus:border-brand-500"
                     />
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 const DesignCustomizer: React.FC = () => {
-  const { draftTheme, setDraftTheme, saveTheme, isSaving, isDirty, isLoading } = useTheme();
+  const { draftTheme, setDraftTheme, saveTheme, isSaving, isDirty, isLoading } = useTheme()
 
   const patchColors = useCallback(
     (patch: Partial<ThemeColorConfig>) =>
-      setDraftTheme({ ...draftTheme, colors: { ...draftTheme.colors, ...patch } }),
-    [draftTheme, setDraftTheme]
-  );
+      setDraftTheme({
+        ...draftTheme,
+        colors: { ...draftTheme.colors, ...patch },
+      }),
+    [draftTheme, setDraftTheme],
+  )
 
   const patchLayout = useCallback(
     (patch: Partial<ThemeConfig["layout"]>) =>
-      setDraftTheme({ ...draftTheme, layout: { ...draftTheme.layout, ...patch } }),
-    [draftTheme, setDraftTheme]
-  );
+      setDraftTheme({
+        ...draftTheme,
+        layout: { ...draftTheme.layout, ...patch },
+      }),
+    [draftTheme, setDraftTheme],
+  )
 
   const patchTypography = useCallback(
-    (fontPair: FontPair) =>
-      setDraftTheme({ ...draftTheme, typography: { fontPair } }),
-    [draftTheme, setDraftTheme]
-  );
+    (fontPair: FontPair) => setDraftTheme({ ...draftTheme, typography: { fontPair } }),
+    [draftTheme, setDraftTheme],
+  )
 
-  const handleReset = useCallback(
-    () => setDraftTheme(DEFAULT_THEME_CONFIG),
-    [setDraftTheme]
-  );
+  const handleReset = useCallback(() => setDraftTheme(DEFAULT_THEME_CONFIG), [setDraftTheme])
 
-  const widgets = draftTheme.layout.sidebarWidgets ?? DEFAULT_SIDEBAR_WIDGETS;
+  const widgets = draftTheme.layout.sidebarWidgets ?? DEFAULT_SIDEBAR_WIDGETS
 
-  const updateWidget = useCallback((index: number, updated: SidebarWidget) => {
-    const next = widgets.map((w, i) => (i === index ? updated : w));
-    patchLayout({ sidebarWidgets: next });
-  }, [widgets, patchLayout]);
+  const updateWidget = useCallback(
+    (index: number, updated: SidebarWidget) => {
+      const next = widgets.map((w, i) => (i === index ? updated : w))
+      patchLayout({ sidebarWidgets: next })
+    },
+    [widgets, patchLayout],
+  )
 
-  const moveWidget = useCallback((index: number, dir: "up" | "down") => {
-    const next = [...widgets];
-    const swap = dir === "up" ? index - 1 : index + 1;
-    if (swap < 0 || swap >= next.length) return;
-    [next[index], next[swap]] = [next[swap]!, next[index]!];
-    patchLayout({ sidebarWidgets: next });
-  }, [widgets, patchLayout]);
+  const moveWidget = useCallback(
+    (index: number, dir: "up" | "down") => {
+      const next = [...widgets]
+      const swap = dir === "up" ? index - 1 : index + 1
+      if (swap < 0 || swap >= next.length) return
+      ;[next[index], next[swap]] = [next[swap]!, next[index]!]
+      patchLayout({ sidebarWidgets: next })
+    },
+    [widgets, patchLayout],
+  )
 
   // A preset is "active" when the draft exactly matches it
   const activePresetId =
-    THEME_PRESETS.find(
-      (p) => JSON.stringify(p.config) === JSON.stringify(draftTheme)
-    )?.id ?? null;
+    THEME_PRESETS.find((p) => JSON.stringify(p.config) === JSON.stringify(draftTheme))?.id ?? null
 
   const handleSave = useCallback(async () => {
     try {
-      await saveTheme();
+      await saveTheme()
     } catch {
-      alert("Failed to save — please try again.");
+      alert("Failed to save — please try again.")
     }
-  }, [saveTheme]);
+  }, [saveTheme])
 
   return (
     <Layout admin>
@@ -451,9 +470,7 @@ const DesignCustomizer: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-
           <div className="space-y-4">
-
             <Section title="Presets">
               <div className="grid grid-cols-4 gap-2">
                 {THEME_PRESETS.map((preset) => (
@@ -467,7 +484,11 @@ const DesignCustomizer: React.FC = () => {
               </div>
               {activePresetId && (
                 <p className="text-xs text-slate-500">
-                  Based on <span className="text-slate-400">{THEME_PRESETS.find(p => p.id === activePresetId)?.name}</span> — tweak below to customise.
+                  Based on{" "}
+                  <span className="text-slate-400">
+                    {THEME_PRESETS.find((p) => p.id === activePresetId)?.name}
+                  </span>{" "}
+                  — tweak below to customise.
                 </p>
               )}
             </Section>
@@ -492,10 +513,7 @@ const DesignCustomizer: React.FC = () => {
 
             <Section title="Typography">
               <div>
-                <label
-                  htmlFor="font-pair-select"
-                  className="mb-2 block text-sm text-slate-300"
-                >
+                <label htmlFor="font-pair-select" className="mb-2 block text-sm text-slate-300">
                   Font pairing
                 </label>
                 <select
@@ -514,7 +532,9 @@ const DesignCustomizer: React.FC = () => {
                 </select>
                 <p
                   className="mt-2 text-sm text-slate-500"
-                  style={{ fontFamily: FONT_PAIRS[draftTheme.typography.fontPair].main }}
+                  style={{
+                    fontFamily: FONT_PAIRS[draftTheme.typography.fontPair].main,
+                  }}
                 >
                   The quick brown fox jumps over the lazy dog.
                 </p>
@@ -536,8 +556,8 @@ const DesignCustomizer: React.FC = () => {
                 label="Header style"
                 value={draftTheme.layout.headerStyle}
                 options={[
-                  { value: "minimal",  label: "Minimal"  },
-                  { value: "bold",     label: "Bold"     },
+                  { value: "minimal", label: "Minimal" },
+                  { value: "bold", label: "Bold" },
                   { value: "centered", label: "Centered" },
                 ]}
                 onChange={(v) => patchLayout({ headerStyle: v })}
@@ -595,7 +615,7 @@ const DesignCustomizer: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
-export default DesignCustomizer;
+export default DesignCustomizer

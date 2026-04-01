@@ -1,65 +1,72 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { commentsApi, type CommentPayload } from "../../lib/api.js";
-import type { Comment } from "../../types/index.js";
+import React, { useEffect, useState, useCallback } from "react"
+import { commentsApi, type CommentPayload } from "../../lib/api.js"
+import type { Comment } from "../../types/index.js"
 
-const MAX_DEPTH = 3;
+const MAX_DEPTH = 3
 
 const timeAgo = (iso: string): string => {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins  = Math.floor(diff / 60_000);
-  if (mins < 1)   return "just now";
-  if (mins < 60)  return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs  < 24)  return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30)  return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-};
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
 
-const isNew = (iso: string): boolean =>
-  Date.now() - new Date(iso).getTime() < 24 * 60 * 60 * 1000;
+const isNew = (iso: string): boolean => Date.now() - new Date(iso).getTime() < 24 * 60 * 60 * 1000
 
 interface CommentFormProps {
-  postId:      string;
-  parentId?:   string;
-  onSubmitted: (comment: Comment) => void;
-  onCancel?:   () => void;
-  compact?:    boolean;
+  postId: string
+  parentId?: string
+  onSubmitted: (comment: Comment) => void
+  onCancel?: () => void
+  compact?: boolean
 }
 
 const CommentForm: React.FC<CommentFormProps> = ({
-  postId, parentId, onSubmitted, onCancel, compact = false,
+  postId,
+  parentId,
+  onSubmitted,
+  onCancel,
+  compact = false,
 }) => {
-  const [content,     setContent]     = useState("");
-  const [authorName,  setAuthorName]  = useState("");
-  const [authorEmail, setAuthorEmail] = useState("");
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
-  const [success,     setSuccess]     = useState(false);
+  const [content, setContent] = useState("")
+  const [authorName, setAuthorName] = useState("")
+  const [authorEmail, setAuthorEmail] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
     const payload: CommentPayload = {
-      content:     content.trim(),
-      authorName:  authorName.trim(),
+      content: content.trim(),
+      authorName: authorName.trim(),
       authorEmail: authorEmail.trim(),
       ...(parentId ? { parentId } : {}),
-    };
+    }
 
     try {
-      const res = await commentsApi.submit(postId, payload);
-      setSuccess(true);
-      setContent("");
-      onSubmitted(res.data);
+      const res = await commentsApi.submit(postId, payload)
+      setSuccess(true)
+      setContent("")
+      onSubmitted(res.data)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to post comment.");
+      setError(err instanceof Error ? err.message : "Failed to post comment.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (success) {
     return (
@@ -71,7 +78,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
           </button>
         )}
       </div>
-    );
+    )
   }
 
   return (
@@ -141,9 +148,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
         ].join(" ")}
       />
 
-      {error && (
-        <p className="text-xs text-red-400">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-400">{error}</p>}
 
       <div className="flex items-center gap-2">
         <button
@@ -169,32 +174,29 @@ const CommentForm: React.FC<CommentFormProps> = ({
             Cancel
           </button>
         )}
-        <span className={[
-          "ml-auto text-slate-600",
-          compact ? "text-[10px]" : "text-xs",
-        ].join(" ")}>
+        <span className={["ml-auto text-slate-600", compact ? "text-[10px]" : "text-xs"].join(" ")}>
           {content.length}/2000
         </span>
       </div>
     </form>
-  );
-};
+  )
+}
 
 interface CommentNodeProps {
-  comment:     Comment;
-  postId:      string;
-  depth:       number;
-  onNewReply:  (reply: Comment, parentId: string) => void;
+  comment: Comment
+  postId: string
+  depth: number
+  onNewReply: (reply: Comment, parentId: string) => void
 }
 
 const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, depth, onNewReply }) => {
-  const [replyOpen, setReplyOpen] = useState(false);
-  const fresh = isNew(comment.createdAt);
+  const [replyOpen, setReplyOpen] = useState(false)
+  const fresh = isNew(comment.createdAt)
 
   const handleReplySubmitted = (reply: Comment) => {
-    onNewReply(reply, comment.id);
-    setReplyOpen(false);
-  };
+    onNewReply(reply, comment.id)
+    setReplyOpen(false)
+  }
 
   return (
     <div className={depth > 0 ? "ml-4 border-l border-slate-800 pl-4" : ""}>
@@ -207,16 +209,20 @@ const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, depth, onNew
         ].join(" ")}
       >
         {fresh && (
-          <span className="absolute right-3 top-3 rounded-full border border-brand-500/50 bg-brand-500/10
+          <span
+            className="absolute right-3 top-3 rounded-full border border-brand-500/50 bg-brand-500/10
                            px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-400
-                           shadow-[0_0_8px_0_rgba(99,102,241,0.4)]">
+                           shadow-[0_0_8px_0_rgba(99,102,241,0.4)]"
+          >
             New
           </span>
         )}
 
         <div className="mb-2 flex items-center gap-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full
-                          bg-brand-700/60 text-xs font-bold text-brand-200">
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full
+                          bg-brand-700/60 text-xs font-bold text-brand-200"
+          >
             {comment.authorName.charAt(0).toUpperCase()}
           </div>
           <span className="text-sm font-medium text-slate-200">{comment.authorName}</span>
@@ -266,57 +272,55 @@ const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, depth, onNew
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 interface CommentSectionProps {
-  postId: string;
+  postId: string
 }
 
 export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     commentsApi
       .listForPost(postId)
       .then(({ data }) => setComments(data))
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [postId]);
+      .finally(() => setLoading(false))
+  }, [postId])
 
   // Insert a new reply optimistically into the tree at the right parent node
   const insertReply = useCallback((reply: Comment, parentId: string) => {
     const insert = (nodes: Comment[]): Comment[] =>
       nodes.map((n) => {
         if (n.id === parentId) {
-          return { ...n, replies: [...(n.replies ?? []), reply] };
+          return { ...n, replies: [...(n.replies ?? []), reply] }
         }
-        return { ...n, replies: insert(n.replies ?? []) };
-      });
+        return { ...n, replies: insert(n.replies ?? []) }
+      })
     // New replies start as PENDING — show inline confirmation rather than
     // inserting them into the live tree (they won't appear until approved)
-    setComments((prev) => insert(prev));
-  }, []);
+    setComments((prev) => insert(prev))
+  }, [])
 
   const handleRootSubmit = (comment: Comment) => {
     // PENDING — don't add to visible tree; form shows its own success message
-    void comment;
-  };
+    void comment
+  }
 
   const totalCount = (() => {
     const count = (nodes: Comment[]): number =>
-      nodes.reduce((acc, n) => acc + 1 + count(n.replies ?? []), 0);
-    return count(comments);
-  })();
+      nodes.reduce((acc, n) => acc + 1 + count(n.replies ?? []), 0)
+    return count(comments)
+  })()
 
   return (
     <section className="mt-16 border-t border-slate-800 pt-10">
       <h2 className="mb-8 text-xl font-semibold text-slate-100">
-        {totalCount > 0
-          ? `${totalCount} Comment${totalCount !== 1 ? "s" : ""}`
-          : "Comments"}
+        {totalCount > 0 ? `${totalCount} Comment${totalCount !== 1 ? "s" : ""}` : "Comments"}
       </h2>
 
       <div className="mb-10 rounded-xl border border-slate-800 bg-slate-900/40 p-5">
@@ -330,9 +334,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         </div>
       )}
 
-      {error && (
-        <p className="text-sm text-red-400">Could not load comments: {error}</p>
-      )}
+      {error && <p className="text-sm text-red-400">Could not load comments: {error}</p>}
 
       {!loading && !error && comments.length === 0 && (
         <p className="py-4 text-center text-sm text-slate-600">
@@ -354,5 +356,5 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         </div>
       )}
     </section>
-  );
-};
+  )
+}

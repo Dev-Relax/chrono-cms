@@ -1,8 +1,8 @@
-import React from "react";
+import React from "react"
 
 export const Sk: React.FC<{ className?: string }> = ({ className = "" }) => (
   <div className={`animate-pulse rounded bg-slate-800 ${className}`} />
-);
+)
 
 export const SkeletonPageHeader: React.FC<{ withButton?: boolean }> = ({ withButton = true }) => (
   <div className="mb-6 flex items-center justify-between">
@@ -12,7 +12,7 @@ export const SkeletonPageHeader: React.FC<{ withButton?: boolean }> = ({ withBut
     </div>
     {withButton && <Sk className="h-9 w-28 rounded-lg" />}
   </div>
-);
+)
 
 export const SkeletonTableRows: React.FC<{ rows?: number; cols?: number }> = ({
   rows = 6,
@@ -36,7 +36,7 @@ export const SkeletonTableRows: React.FC<{ rows?: number; cols?: number }> = ({
       </div>
     ))}
   </div>
-);
+)
 
 export const SkeletonStatCards: React.FC<{ count?: number }> = ({ count = 4 }) => (
   <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -48,7 +48,7 @@ export const SkeletonStatCards: React.FC<{ count?: number }> = ({ count = 4 }) =
       </div>
     ))}
   </div>
-);
+)
 
 export const SkeletonImageGrid: React.FC<{ count?: number }> = ({ count = 10 }) => (
   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -56,7 +56,7 @@ export const SkeletonImageGrid: React.FC<{ count?: number }> = ({ count = 10 }) 
       <Sk key={i} className="h-32 rounded-xl" />
     ))}
   </div>
-);
+)
 
 export const SkeletonCardList: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
   <div className="space-y-3">
@@ -80,7 +80,7 @@ export const SkeletonCardList: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
       </div>
     ))}
   </div>
-);
+)
 
 export const SkeletonEditorForm: React.FC = () => (
   <div className="space-y-5">
@@ -95,7 +95,7 @@ export const SkeletonEditorForm: React.FC = () => (
       <Sk className="h-9 w-20 rounded-lg" />
     </div>
   </div>
-);
+)
 
 // Static replica of the admin shell used as Suspense fallback — keeps the
 // sidebar visible during route transitions instead of flashing a blank page.
@@ -103,16 +103,16 @@ const SIDEBAR_SECTIONS = [
   {
     title: "Content",
     items: [
-      { icon: "▤", label: "Overview"  },
-      { icon: "✍", label: "Posts"     },
-      { icon: "☰", label: "Pages"     },
+      { icon: "▤", label: "Overview" },
+      { icon: "✍", label: "Posts" },
+      { icon: "☰", label: "Pages" },
       { icon: "💬", label: "Comments" },
     ],
   },
   {
     title: "Assets",
     items: [
-      { icon: "🖼", label: "Media"  },
+      { icon: "🖼", label: "Media" },
       { icon: "🎨", label: "Design" },
     ],
   },
@@ -120,19 +120,21 @@ const SIDEBAR_SECTIONS = [
     title: "Settings",
     items: [
       { icon: "✦", label: "Branding" },
-      { icon: "👥", label: "Users"   },
-      { icon: "⚡", label: "Webhooks"},
-      { icon: "🔑", label: "API Keys"},
+      { icon: "👥", label: "Users" },
+      { icon: "⚡", label: "Webhooks" },
+      { icon: "🔑", label: "API Keys" },
     ],
   },
-];
+]
 
 export const AdminPageSkeleton: React.FC = () => (
   <div className="flex h-screen overflow-hidden bg-slate-950">
     <aside className="flex h-screen w-[220px] shrink-0 flex-col border-r border-slate-800 bg-slate-950">
       <div className="flex h-14 items-center border-b border-slate-800 px-4">
         <div className="flex items-center gap-2 font-semibold">
-          <span className="text-lg" style={{ color: "var(--color-primary)" }}>⏱</span>
+          <span className="text-lg" style={{ color: "var(--color-primary)" }}>
+            ⏱
+          </span>
           <span className="text-slate-100">
             Chronos<span style={{ color: "var(--color-primary)" }}>CMS</span>
           </span>
@@ -177,4 +179,4 @@ export const AdminPageSkeleton: React.FC = () => (
       </div>
     </main>
   </div>
-);
+)

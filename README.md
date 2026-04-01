@@ -46,11 +46,11 @@
 
 Chronos CMS is a **monorepo** shipping three packages:
 
-| Package | Path | Role |
-|---|---|---|
-| `@chronos/db` | `packages/db/` | Prisma schema, client singleton, seed script |
-| `@chronos/api` | `apps/api/` | Fastify REST API, JWT auth, content scheduler |
-| `@chronos/web` | `apps/web/` | React + Vite admin UI and public blog |
+| Package        | Path           | Role                                          |
+| -------------- | -------------- | --------------------------------------------- |
+| `@chronos/db`  | `packages/db/` | Prisma schema, client singleton, seed script  |
+| `@chronos/api` | `apps/api/`    | Fastify REST API, JWT auth, content scheduler |
+| `@chronos/web` | `apps/web/`    | React + Vite admin UI and public blog         |
 
 ### Two ways to use it
 
@@ -63,6 +63,7 @@ Chronos CMS is a **monorepo** shipping three packages:
 ## Feature Highlights
 
 ### Content editing
+
 - **TipTap 2 rich text editor** with full toolbar, Bubble Menu and Floating Menu
 - **Side-by-side preview** — toggle Editor / Split / Preview modes
 - **Syntax-highlighted code blocks** via `lowlight` / `highlight.js` (TypeScript, JavaScript, Bash, JSON, CSS)
@@ -71,6 +72,7 @@ Chronos CMS is a **monorepo** shipping three packages:
 - Content stored as **TipTap JSON (JSONB)** — portable, XSS-safe, queryable
 
 ### Internationalisation (i18n)
+
 - **Dynamic locale tabs** — add any BCP-47 locale (`en`, `fr`, `es`, `zh-tw`, …) in the post and page editors; no limit
 - **Per-locale fields** — each locale has its own title, slug, content, excerpt, and SEO metadata
 - **Fallback chain** — if the requested locale has no translation, the API falls back to `defaultLocale`, then the first available translation
@@ -80,6 +82,7 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **Post revision history** is scoped per locale
 
 ### Posts & pages
+
 - **Post scheduling** — set `scheduledAt`; a background cron publishes automatically every 60 s
 - **Featured posts** — pinned to the top of the feed
 - **Tags** — flat taxonomy, auto-created on save, filterable via `?tag=`
@@ -89,24 +92,28 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **Revision history** — last 10 revisions per post+locale kept; one-click restore from the editor
 
 ### Comments
+
 - **Public comment submission** — nested replies supported
 - **Moderation queue** — PENDING / APPROVED / SPAM / REJECTED states
 - **Admin moderation panel** — approve, reject, spam, delete, bulk actions
 - **Pending count badge** on the admin nav
 
 ### Media
+
 - **Image upload** — drag & drop or click to browse, multi-file
 - **Automatic WebP conversion** — raster images resized to max 1920 × 1920 px and converted to WebP (quality 85) via `sharp`
 - **SVG passthrough** — vector files stored as-is
 - **Copy URL** — absolute URL copied to clipboard, works in dev (Vite proxy) and production
 
 ### Multi-user
+
 - **Three roles**: `ADMIN`, `EDITOR`, `AUTHOR`
 - Role-based API enforcement — AUTHORs see only their own posts
 - **User management page** (ADMIN only) — invite users, change roles, reset passwords
 - JWT payload carries `{ sub, email, role }` — no extra DB lookup on authenticated requests
 
 ### Headless API
+
 - **Content format negotiation** — append `?format=html` or `?format=markdown` to any public read endpoint; the API converts TipTap JSON on the fly
 - **Locale filtering** — `?lang=fr` returns content in French (with fallback); `?lang=fr&strict=1` filters to only content that has a French translation
 - **Per-locale RSS feeds** — `/rss.xml?lang=fr` or `/rss/fr.xml`
@@ -116,7 +123,8 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **Activity log** — every create/update/publish/delete is recorded
 - **CORS configurable** — comma-separated `CORS_ORIGIN` env var
 
-### Design customizer *(built-in frontend only)*
+### Design customizer _(built-in frontend only)_
+
 - Card style: **grid** or **list**
 - Sidebar toggle with configurable widgets: About, Tags cloud, Recent posts, Social links, Custom text
 - Accent colour, font family, header style
@@ -128,37 +136,37 @@ Chronos CMS is a **monorepo** shipping three packages:
 
 ### Frontend (`apps/web`)
 
-| Tool | Purpose |
-|---|---|
-| React 18 + Vite 5 | UI + build tooling |
-| TypeScript 5 | Type safety |
-| Tailwind CSS 3 + `@tailwindcss/typography` | Styling + prose rendering |
-| TipTap 2 (`@tiptap/react`) | Rich text editor |
-| `lowlight` / `highlight.js` | Code block syntax highlighting |
-| React Router 6 | Client-side routing |
-| `react-i18next` | Admin UI string translations |
+| Tool                                       | Purpose                        |
+| ------------------------------------------ | ------------------------------ |
+| React 18 + Vite 5                          | UI + build tooling             |
+| TypeScript 5                               | Type safety                    |
+| Tailwind CSS 3 + `@tailwindcss/typography` | Styling + prose rendering      |
+| TipTap 2 (`@tiptap/react`)                 | Rich text editor               |
+| `lowlight` / `highlight.js`                | Code block syntax highlighting |
+| React Router 6                             | Client-side routing            |
+| `react-i18next`                            | Admin UI string translations   |
 
 ### Backend (`apps/api`)
 
-| Tool | Purpose |
-|---|---|
-| Fastify 4 | HTTP server |
-| TypeScript 5 | Type safety |
-| `@fastify/jwt` | JWT sign / verify |
-| `@fastify/cors` | CORS headers |
-| `@fastify/multipart` | File upload handling |
-| `@fastify/static` | Serve `/uploads/*` |
-| `sharp` 0.33 | Image resize + WebP conversion |
-| `bcryptjs` | Password hashing |
-| Zod 3 | Request validation |
-| `pino-pretty` | Dev log formatting |
+| Tool                 | Purpose                        |
+| -------------------- | ------------------------------ |
+| Fastify 4            | HTTP server                    |
+| TypeScript 5         | Type safety                    |
+| `@fastify/jwt`       | JWT sign / verify              |
+| `@fastify/cors`      | CORS headers                   |
+| `@fastify/multipart` | File upload handling           |
+| `@fastify/static`    | Serve `/uploads/*`             |
+| `sharp` 0.33         | Image resize + WebP conversion |
+| `bcryptjs`           | Password hashing               |
+| Zod 3                | Request validation             |
+| `pino-pretty`        | Dev log formatting             |
 
 ### Database (`packages/db`)
 
-| Tool | Purpose |
-|---|---|
-| PostgreSQL 16 | Primary database |
-| Prisma ORM 5 | Schema, migrations, typed client |
+| Tool          | Purpose                          |
+| ------------- | -------------------------------- |
+| PostgreSQL 16 | Primary database                 |
+| Prisma ORM 5  | Schema, migrations, typed client |
 
 ---
 
@@ -254,7 +262,7 @@ chrono-cms/
 
 - **Node.js** ≥ 20
 - **npm** ≥ 10 (workspaces)
-- **PostgreSQL** ≥ 14 *(or Docker Desktop — no local install needed)*
+- **PostgreSQL** ≥ 14 _(or Docker Desktop — no local install needed)_
 
 ---
 
@@ -284,10 +292,10 @@ docker compose exec api npm run db:seed
 
 Default credentials (set in `.env`):
 
-| | Default |
-|---|---|
-| Email | `admin@chronos.dev` |
-| Password | `Admin1234!` |
+|          | Default             |
+| -------- | ------------------- |
+| Email    | `admin@chronos.dev` |
+| Password | `Admin1234!`        |
 
 > Change these and set a strong `JWT_SECRET` before exposing to the internet.
 
@@ -304,6 +312,7 @@ npm run dev                    # API :4000 + Web :5173
 ```
 
 After changing `schema.prisma`:
+
 ```bash
 # Stop the server first (Windows DLL lock), then:
 npm run db:migrate:dev         # creates + applies new migration
@@ -315,18 +324,19 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
-| `JWT_SECRET` | ✅ | — | Token signing key — use ≥ 48 random chars |
-| `JWT_EXPIRES_IN` | | `7d` | Token lifetime (`1h`, `7d`, `30d`…) |
-| `API_PORT` | | `4000` | Fastify listen port |
-| `CORS_ORIGIN` | | `http://localhost:5173` | Comma-separated allowed origins |
-| `VITE_API_URL` | | *(proxy)* | API origin seen from browser. In dev the Vite proxy handles `/api` and `/uploads` automatically; set this only in production builds |
-| `ADMIN_EMAIL` | | `admin@chronos.dev` | Seeded admin email |
-| `ADMIN_PASSWORD` | | `Admin1234!` | Seeded admin password |
+| Variable         | Required | Default                 | Description                                                                                                                         |
+| ---------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`   | ✅       | —                       | PostgreSQL connection string                                                                                                        |
+| `JWT_SECRET`     | ✅       | —                       | Token signing key — use ≥ 48 random chars                                                                                           |
+| `JWT_EXPIRES_IN` |          | `7d`                    | Token lifetime (`1h`, `7d`, `30d`…)                                                                                                 |
+| `API_PORT`       |          | `4000`                  | Fastify listen port                                                                                                                 |
+| `CORS_ORIGIN`    |          | `http://localhost:5173` | Comma-separated allowed origins                                                                                                     |
+| `VITE_API_URL`   |          | _(proxy)_               | API origin seen from browser. In dev the Vite proxy handles `/api` and `/uploads` automatically; set this only in production builds |
+| `ADMIN_EMAIL`    |          | `admin@chronos.dev`     | Seeded admin email                                                                                                                  |
+| `ADMIN_PASSWORD` |          | `Admin1234!`            | Seeded admin password                                                                                                               |
 
 Generate a secret:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
@@ -378,62 +388,62 @@ Source: [`packages/db/prisma/schema.prisma`](packages/db/prisma/schema.prisma)
 
 ### Enums
 
-| Enum | Values |
-|---|---|
-| `Role` | `ADMIN` `EDITOR` `AUTHOR` |
-| `PostStatus` | `DRAFT` `PUBLISHED` |
-| `PageStatus` | `DRAFT` `PUBLISHED` |
+| Enum            | Values                                 |
+| --------------- | -------------------------------------- |
+| `Role`          | `ADMIN` `EDITOR` `AUTHOR`              |
+| `PostStatus`    | `DRAFT` `PUBLISHED`                    |
+| `PageStatus`    | `DRAFT` `PUBLISHED`                    |
 | `CommentStatus` | `PENDING` `APPROVED` `SPAM` `REJECTED` |
 
 ### `Post` fields (global, locale-agnostic)
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `String` (cuid) | PK |
-| `defaultLocale` | `String` | BCP-47 tag of the canonical locale (e.g. `"en"`) |
-| `status` | `PostStatus` | `DRAFT` / `PUBLISHED` |
-| `featured` | `Boolean` | Pinned to top of feed |
-| `scheduledAt` | `DateTime?` | Auto-publish at this time |
-| `publishedAt` | `DateTime?` | Set on first publish |
-| `authorId` | `String` | FK → `User.id` |
+| Column          | Type            | Notes                                            |
+| --------------- | --------------- | ------------------------------------------------ |
+| `id`            | `String` (cuid) | PK                                               |
+| `defaultLocale` | `String`        | BCP-47 tag of the canonical locale (e.g. `"en"`) |
+| `status`        | `PostStatus`    | `DRAFT` / `PUBLISHED`                            |
+| `featured`      | `Boolean`       | Pinned to top of feed                            |
+| `scheduledAt`   | `DateTime?`     | Auto-publish at this time                        |
+| `publishedAt`   | `DateTime?`     | Set on first publish                             |
+| `authorId`      | `String`        | FK → `User.id`                                   |
 
 ### `PostTranslation` fields (per-locale content)
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `String` (cuid) | PK |
-| `postId` | `String` | FK → `Post.id` (cascade delete) |
-| `locale` | `String` | BCP-47 tag (e.g. `"en"`, `"fr"`, `"zh-tw"`) |
-| `title` | `String` | |
-| `slug` | `String` | Unique **per locale** — enables `/en/my-post` vs `/fr/mon-article` routing |
-| `content` | `Json` | TipTap ProseMirror document (JSONB) |
-| `excerpt` | `String?` | Plain-text summary |
-| `metaTitle` | `String?` | SEO title |
-| `metaDescription` | `String?` | SEO description |
-| `ogImage` | `String?` | Open Graph image URL |
+| Column            | Type            | Notes                                                                      |
+| ----------------- | --------------- | -------------------------------------------------------------------------- |
+| `id`              | `String` (cuid) | PK                                                                         |
+| `postId`          | `String`        | FK → `Post.id` (cascade delete)                                            |
+| `locale`          | `String`        | BCP-47 tag (e.g. `"en"`, `"fr"`, `"zh-tw"`)                                |
+| `title`           | `String`        |                                                                            |
+| `slug`            | `String`        | Unique **per locale** — enables `/en/my-post` vs `/fr/mon-article` routing |
+| `content`         | `Json`          | TipTap ProseMirror document (JSONB)                                        |
+| `excerpt`         | `String?`       | Plain-text summary                                                         |
+| `metaTitle`       | `String?`       | SEO title                                                                  |
+| `metaDescription` | `String?`       | SEO description                                                            |
+| `ogImage`         | `String?`       | Open Graph image URL                                                       |
 
 ### `Page` fields (global)
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `String` (cuid) | PK |
-| `defaultLocale` | `String` | BCP-47 tag of the canonical locale |
-| `status` | `PageStatus` | `DRAFT` / `PUBLISHED` |
-| `authorId` | `String` | FK → `User.id` |
+| Column          | Type            | Notes                              |
+| --------------- | --------------- | ---------------------------------- |
+| `id`            | `String` (cuid) | PK                                 |
+| `defaultLocale` | `String`        | BCP-47 tag of the canonical locale |
+| `status`        | `PageStatus`    | `DRAFT` / `PUBLISHED`              |
+| `authorId`      | `String`        | FK → `User.id`                     |
 
 ### `PageTranslation` fields (per-locale content)
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `String` (cuid) | PK |
-| `pageId` | `String` | FK → `Page.id` (cascade delete) |
-| `locale` | `String` | BCP-47 tag |
-| `title` | `String` | |
-| `slug` | `String` | Unique **per locale** — becomes `/:slug` on the public site |
-| `content` | `Json` | TipTap ProseMirror document (JSONB) |
-| `metaTitle` | `String?` | |
-| `metaDescription` | `String?` | |
-| `ogImage` | `String?` | |
+| Column            | Type            | Notes                                                       |
+| ----------------- | --------------- | ----------------------------------------------------------- |
+| `id`              | `String` (cuid) | PK                                                          |
+| `pageId`          | `String`        | FK → `Page.id` (cascade delete)                             |
+| `locale`          | `String`        | BCP-47 tag                                                  |
+| `title`           | `String`        |                                                             |
+| `slug`            | `String`        | Unique **per locale** — becomes `/:slug` on the public site |
+| `content`         | `Json`          | TipTap ProseMirror document (JSONB)                         |
+| `metaTitle`       | `String?`       |                                                             |
+| `metaDescription` | `String?`       |                                                             |
+| `ogImage`         | `String?`       |                                                             |
 
 ---
 
@@ -442,6 +452,7 @@ Source: [`packages/db/prisma/schema.prisma`](packages/db/prisma/schema.prisma)
 **Base URL:** `http://localhost:4000`
 
 Endpoints marked 🔒 require:
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -473,8 +484,11 @@ Errors: `400` invalid body · `401` wrong credentials
 // Response 200
 {
   "user": {
-    "id": "clx…", "email": "admin@chronos.dev",
-    "name": "Admin", "role": "ADMIN", "createdAt": "…"
+    "id": "clx…",
+    "email": "admin@chronos.dev",
+    "name": "Admin",
+    "role": "ADMIN",
+    "createdAt": "…"
   }
 }
 ```
@@ -489,14 +503,14 @@ All public post responses are **flattened** — translation fields are promoted 
 
 Public. Returns paginated published posts, featured first.
 
-| Query param | Type | Default | Description |
-|---|---|---|---|
-| `page` | number | `1` | Page number |
-| `limit` | number | `10` | Items per page (max 50) |
-| `tag` | string | — | Filter by tag slug |
-| `lang` | string | `en` | Preferred locale for translation fallback |
-| `strict` | `1` / `true` | — | Only return posts that have an exact translation in `lang` |
-| `format` | `json` \| `html` \| `markdown` | `json` | Content format |
+| Query param | Type                           | Default | Description                                                |
+| ----------- | ------------------------------ | ------- | ---------------------------------------------------------- |
+| `page`      | number                         | `1`     | Page number                                                |
+| `limit`     | number                         | `10`    | Items per page (max 50)                                    |
+| `tag`       | string                         | —       | Filter by tag slug                                         |
+| `lang`      | string                         | `en`    | Preferred locale for translation fallback                  |
+| `strict`    | `1` / `true`                   | —       | Only return posts that have an exact translation in `lang` |
+| `format`    | `json` \| `html` \| `markdown` | `json`  | Content format                                             |
 
 ```json
 // Response 200
@@ -532,11 +546,11 @@ Public. Returns paginated published posts, featured first.
 
 Public. Full-text search on title and excerpt (all locales searched).
 
-| Query param | Type | Description |
-|---|---|---|
-| `q` | string | Search query |
-| `lang` | string | Preferred locale for result translation |
-| `format` | `json` \| `html` \| `markdown` | Content format |
+| Query param | Type                           | Description                             |
+| ----------- | ------------------------------ | --------------------------------------- |
+| `q`         | string                         | Search query                            |
+| `lang`      | string                         | Preferred locale for result translation |
+| `format`    | `json` \| `html` \| `markdown` | Content format                          |
 
 ```
 GET /posts/search?q=javascript&lang=fr&format=markdown
@@ -550,10 +564,10 @@ Response: `{ "data": Post[] }` (max 20 results, featured first)
 
 Public. Single published post by slug. The slug is matched across **all locale translations** — you can use any locale's slug and the API resolves the correct post.
 
-| Query param | Type | Description |
-|---|---|---|
-| `lang` | string | Override the response locale (fallback applies) |
-| `format` | `json` \| `html` \| `markdown` | Content format |
+| Query param | Type                           | Description                                     |
+| ----------- | ------------------------------ | ----------------------------------------------- |
+| `lang`      | string                         | Override the response locale (fallback applies) |
+| `format`    | `json` \| `html` \| `markdown` | Content format                                  |
 
 ```
 GET /posts/mon-article         → returns the post in "fr" (slug's own locale)
@@ -568,10 +582,10 @@ Response: `{ "data": Post }` · Errors: `404`
 
 All posts (any status). AUTHORs see only their own posts.
 
-| Query param | Description |
-|---|---|
-| `page`, `limit` | Pagination |
-| `status` | `DRAFT` or `PUBLISHED` |
+| Query param     | Description            |
+| --------------- | ---------------------- |
+| `page`, `limit` | Pagination             |
+| `status`        | `DRAFT` or `PUBLISHED` |
 
 ---
 
@@ -687,11 +701,11 @@ Custom standalone pages (About, Contact, Privacy Policy, etc.). Each page suppor
 
 Public. List all published pages.
 
-| Query param | Type | Default | Description |
-|---|---|---|---|
-| `lang` | string | — | Preferred locale (falls back to `defaultLocale`) |
-| `strict` | `1` / `true` | — | Only return pages with an exact translation in `lang` |
-| `format` | `json` \| `html` \| `markdown` | `json` | Content format |
+| Query param | Type                           | Default | Description                                           |
+| ----------- | ------------------------------ | ------- | ----------------------------------------------------- |
+| `lang`      | string                         | —       | Preferred locale (falls back to `defaultLocale`)      |
+| `strict`    | `1` / `true`                   | —       | Only return pages with an exact translation in `lang` |
+| `format`    | `json` \| `html` \| `markdown` | `json`  | Content format                                        |
 
 ```
 GET /pages?lang=fr
@@ -706,10 +720,10 @@ Response: `{ "data": Page[] }`
 
 Public. Single published page by slug. Slugs are matched across all locale translations.
 
-| Query param | Type | Description |
-|---|---|---|
-| `lang` | string | Override response locale |
-| `format` | `json` \| `html` \| `markdown` | Content format |
+| Query param | Type                           | Description              |
+| ----------- | ------------------------------ | ------------------------ |
+| `lang`      | string                         | Override response locale |
+| `format`    | `json` \| `html` \| `markdown` | Content format           |
 
 ```json
 // Response 200
@@ -737,7 +751,7 @@ Errors: `404`
 
 ---
 
-#### `GET /admin/pages` 🔒 *(EDITOR+)*
+#### `GET /admin/pages` 🔒 _(EDITOR+)_
 
 List all pages (any status). Each item is flattened to its `defaultLocale` translation and includes a `translationCount` field.
 
@@ -745,7 +759,7 @@ Response: `{ "data": Page[] }`
 
 ---
 
-#### `GET /admin/pages/:id` 🔒 *(EDITOR+)*
+#### `GET /admin/pages/:id` 🔒 _(EDITOR+)_
 
 Single page with all translations (used by the editor).
 
@@ -753,7 +767,7 @@ Response: `{ "data": { id, defaultLocale, status, translations: [...], … } }`
 
 ---
 
-#### `POST /admin/pages` 🔒 *(EDITOR+)*
+#### `POST /admin/pages` 🔒 _(EDITOR+)_
 
 ```json
 {
@@ -780,7 +794,7 @@ Response: `201 { "data": Page }` · Errors: `400`
 
 ---
 
-#### `PUT /admin/pages/:id` 🔒 *(EDITOR+)*
+#### `PUT /admin/pages/:id` 🔒 _(EDITOR+)_
 
 Partial update. Translations are upserted.
 
@@ -788,7 +802,7 @@ Response: `200 { "data": Page }` · Errors: `400` `403` `404`
 
 ---
 
-#### `DELETE /admin/pages/:id` 🔒 *(EDITOR+)*
+#### `DELETE /admin/pages/:id` 🔒 _(EDITOR+)_
 
 Cascades to all translations.
 
@@ -825,11 +839,11 @@ Response: `201 { "data": Comment, "message": "Comment submitted for review" }`
 
 List all comments with optional filters.
 
-| Query param | Description |
-|---|---|
-| `status` | `PENDING` / `APPROVED` / `SPAM` / `REJECTED` |
-| `postId` | Filter by post |
-| `page`, `limit` | Pagination |
+| Query param     | Description                                  |
+| --------------- | -------------------------------------------- |
+| `status`        | `PENDING` / `APPROVED` / `SPAM` / `REJECTED` |
+| `postId`        | Filter by post                               |
+| `page`, `limit` | Pagination                                   |
 
 ---
 
@@ -911,7 +925,7 @@ Response: `204` · Errors: `400` invalid filename · `404` not found
 
 ---
 
-### Users Endpoints *(ADMIN only)*
+### Users Endpoints _(ADMIN only)_
 
 #### `GET /admin/users` 🔒
 
@@ -958,7 +972,7 @@ Public. Returns the full site settings (theme + brand config).
 
 ---
 
-#### `PUT /admin/settings` 🔒 *(ADMIN)*
+#### `PUT /admin/settings` 🔒 _(ADMIN)_
 
 Update theme and/or brand config.
 
@@ -979,16 +993,16 @@ Outbound HTTP callbacks fired on CMS events. All payloads include a full `transl
 
 #### Webhook events
 
-| Event | Fired when |
-|---|---|
-| `post.created` | A post is created |
-| `post.updated` | A published post is updated |
+| Event            | Fired when                        |
+| ---------------- | --------------------------------- |
+| `post.created`   | A post is created                 |
+| `post.updated`   | A published post is updated       |
 | `post.published` | A post transitions to `PUBLISHED` |
-| `post.deleted` | A post is deleted |
-| `page.created` | A page is created |
-| `page.updated` | A published page is updated |
+| `post.deleted`   | A post is deleted                 |
+| `page.created`   | A page is created                 |
+| `page.updated`   | A published page is updated       |
 | `page.published` | A page transitions to `PUBLISHED` |
-| `page.deleted` | A page is deleted |
+| `page.deleted`   | A page is deleted                 |
 
 #### Payload shape
 
@@ -1002,7 +1016,7 @@ Outbound HTTP callbacks fired on CMS events. All payloads include a full `transl
     "title": "My Post",
     "slug": "my-post",
     "translations": [
-      { "locale": "en", "title": "My Post",    "slug": "my-post" },
+      { "locale": "en", "title": "My Post", "slug": "my-post" },
       { "locale": "fr", "title": "Mon Article", "slug": "mon-article" }
     ]
   }
@@ -1012,6 +1026,7 @@ Outbound HTTP callbacks fired on CMS events. All payloads include a full `transl
 If a `secret` is configured, the request includes an `X-Webhook-Signature: sha256=<hmac>` header for verification.
 
 #### `GET /admin/webhooks` 🔒
+
 #### `POST /admin/webhooks` 🔒
 
 ```json
@@ -1027,7 +1042,9 @@ If a `secret` is configured, the request includes an `X-Webhook-Signature: sha25
 Pass `"events": []` to subscribe to all events.
 
 #### `PUT /admin/webhooks/:id` 🔒
+
 #### `DELETE /admin/webhooks/:id` 🔒
+
 #### `POST /admin/webhooks/:id/test` 🔒
 
 Sends a test ping to the webhook URL. Response: `{ "ok": true, "status": 200 }`
@@ -1039,6 +1056,7 @@ Sends a test ping to the webhook URL. Response: `{ "ok": true, "status": 200 }`
 Machine-to-machine access. Keys are shown once on creation; only a bcrypt hash is stored.
 
 #### `GET /admin/apikeys` 🔒
+
 #### `POST /admin/apikeys` 🔒
 
 ```json
@@ -1049,7 +1067,8 @@ Machine-to-machine access. Keys are shown once on creation; only a bcrypt hash i
 // Response 201
 {
   "data": {
-    "id": "clx…", "name": "CI Deploy Key",
+    "id": "clx…",
+    "name": "CI Deploy Key",
     "prefix": "ck_abc123",
     "key": "ck_abc123.full_key_shown_once",
     "createdAt": "…"
@@ -1067,9 +1086,9 @@ Machine-to-machine access. Keys are shown once on creation; only a bcrypt hash i
 
 Public. RSS 2.0 feed of the latest 20 published posts. Each item uses the post's `defaultLocale` translation by default.
 
-| Query param | Description |
-|---|---|
-| `lang` | Return items in this locale (falls back to `defaultLocale`) |
+| Query param | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `lang`      | Return items in this locale (falls back to `defaultLocale`) |
 
 ```
 GET /rss.xml           → default locale feed
@@ -1091,10 +1110,18 @@ GET /rss/en-us.xml → American English feed
 The `<language>` tag in the feed reflects the requested locale. Link these in your `<head>`:
 
 ```html
-<link rel="alternate" type="application/rss+xml"
-      title="My Blog (EN)" href="https://example.com/rss/en.xml" />
-<link rel="alternate" type="application/rss+xml"
-      title="My Blog (FR)" href="https://example.com/rss/fr.xml" />
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="My Blog (EN)"
+  href="https://example.com/rss/en.xml"
+/>
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="My Blog (FR)"
+  href="https://example.com/rss/fr.xml"
+/>
 ```
 
 ---
@@ -1158,11 +1185,11 @@ Titles and slugs in `recentPosts` / `recentPages` are derived from the `defaultL
 
 All public read endpoints that return content accept a `?format=` query parameter:
 
-| Value | Response type | Description |
-|---|---|---|
-| `json` *(default)* | `object` | Raw TipTap ProseMirror JSON — use with `PostRenderer` or TipTap |
-| `html` | `string` | Full HTML with inline styles (float, width) on images |
-| `markdown` | `string` | CommonMark Markdown |
+| Value              | Response type | Description                                                     |
+| ------------------ | ------------- | --------------------------------------------------------------- |
+| `json` _(default)_ | `object`      | Raw TipTap ProseMirror JSON — use with `PostRenderer` or TipTap |
+| `html`             | `string`      | Full HTML with inline styles (float, width) on images           |
+| `markdown`         | `string`      | CommonMark Markdown                                             |
 
 The conversion is performed server-side in `contentTransformer.ts` — no client-side TipTap dependency needed.
 
@@ -1208,14 +1235,14 @@ The **default locale** (marked ★) determines which translation is used as the 
 
 ### API locale selection
 
-| Scenario | What to do |
-|---|---|
-| Fetch posts in French (fallback OK) | `GET /posts?lang=fr` |
+| Scenario                                   | What to do                    |
+| ------------------------------------------ | ----------------------------- |
+| Fetch posts in French (fallback OK)        | `GET /posts?lang=fr`          |
 | Fetch only posts with a French translation | `GET /posts?lang=fr&strict=1` |
-| Fetch a specific post in French | `GET /posts/my-post?lang=fr` |
-| Fetch a post using its French slug | `GET /posts/mon-article` |
-| List pages in French | `GET /pages?lang=fr` |
-| French RSS feed | `GET /rss/fr.xml` |
+| Fetch a specific post in French            | `GET /posts/my-post?lang=fr`  |
+| Fetch a post using its French slug         | `GET /posts/mon-article`      |
+| List pages in French                       | `GET /pages?lang=fr`          |
+| French RSS feed                            | `GET /rss/fr.xml`             |
 
 ### `hreflang` response field
 
@@ -1256,31 +1283,31 @@ RichTextEditor.tsx              ← extension registry + useEditor
 
 ### Extensions
 
-| Extension | Package | Purpose |
-|---|---|---|
-| `StarterKit` | `@tiptap/starter-kit` | Paragraph, headings (H1–H4), bold, italic, strike, lists, blockquote, code, history |
-| `Underline` | `@tiptap/extension-underline` | Underline mark |
-| `TextAlign` | `@tiptap/extension-text-align` | Left / center / right / justify on blocks |
-| `TextStyle` | `@tiptap/extension-text-style` | Base for color and font size |
-| `Color` | `@tiptap/extension-color` | Inline text colour |
-| `Highlight` | `@tiptap/extension-highlight` | Multi-colour text highlight |
-| `Link` | `@tiptap/extension-link` | Hyperlinks with target |
-| `ImageExtension` | local | Resizable + floatable images with NodeView |
-| `FontFamily` | `@tiptap/extension-font-family` | Font family picker |
-| `FontSize` | local | Custom font size mark |
-| `Subscript` | `@tiptap/extension-subscript` | |
-| `Superscript` | `@tiptap/extension-superscript` | |
-| `CodeBlockLowlight` | `@tiptap/extension-code-block-lowlight` | Syntax-highlighted code blocks |
-| `Placeholder` | `@tiptap/extension-placeholder` | Ghost text |
+| Extension           | Package                                 | Purpose                                                                             |
+| ------------------- | --------------------------------------- | ----------------------------------------------------------------------------------- |
+| `StarterKit`        | `@tiptap/starter-kit`                   | Paragraph, headings (H1–H4), bold, italic, strike, lists, blockquote, code, history |
+| `Underline`         | `@tiptap/extension-underline`           | Underline mark                                                                      |
+| `TextAlign`         | `@tiptap/extension-text-align`          | Left / center / right / justify on blocks                                           |
+| `TextStyle`         | `@tiptap/extension-text-style`          | Base for color and font size                                                        |
+| `Color`             | `@tiptap/extension-color`               | Inline text colour                                                                  |
+| `Highlight`         | `@tiptap/extension-highlight`           | Multi-colour text highlight                                                         |
+| `Link`              | `@tiptap/extension-link`                | Hyperlinks with target                                                              |
+| `ImageExtension`    | local                                   | Resizable + floatable images with NodeView                                          |
+| `FontFamily`        | `@tiptap/extension-font-family`         | Font family picker                                                                  |
+| `FontSize`          | local                                   | Custom font size mark                                                               |
+| `Subscript`         | `@tiptap/extension-subscript`           |                                                                                     |
+| `Superscript`       | `@tiptap/extension-superscript`         |                                                                                     |
+| `CodeBlockLowlight` | `@tiptap/extension-code-block-lowlight` | Syntax-highlighted code blocks                                                      |
+| `Placeholder`       | `@tiptap/extension-placeholder`         | Ghost text                                                                          |
 
 ### `PostRenderer`
 
 Recursively walks TipTap JSON into React elements. Never uses `dangerouslySetInnerHTML`.
 
 ```tsx
-import { PostRenderer } from "@/components/editor/PostRenderer";
+import { PostRenderer } from "@/components/editor/PostRenderer"
 
-<PostRenderer doc={post.content} className="my-prose" />
+;<PostRenderer doc={post.content} className="my-prose" />
 ```
 
 Images are rendered with `float`/`margin`/`width` inline styles matching the editor layout.
@@ -1289,24 +1316,24 @@ Images are rendered with `float`/`margin`/`width` inline styles matching the edi
 
 ## Frontend Pages & Routing
 
-| Path | Component | Access | Description |
-|---|---|---|---|
-| `/` | `BlogFeedPage` | Public | Paginated post feed with search, sidebar, layout modes |
-| `/posts/:slug` | `BlogPostPage` | Public | Single post with SEO meta tags + language switcher |
-| `/:slug` | `CustomPageView` | Public | Custom CMS page (About, Contact, etc.) + language switcher |
-| `/login` | `LoginPage` | Public | Email + password login |
-| `/admin` | `AdminDashboard` | 🔒 | Stats dashboard + recent activity |
-| `/admin/posts/new` | `PostEditorPage` | 🔒 | Create post — dynamic locale tabs |
-| `/admin/posts/:id/edit` | `PostEditorPage` | 🔒 | Edit post — dynamic locale tabs + revision history |
-| `/admin/pages` | `PagesAdmin` | 🔒 | Custom pages list with translation count badges |
-| `/admin/pages/new` | `PageEditorPage` | 🔒 | Create page — dynamic locale tabs |
-| `/admin/pages/:id/edit` | `PageEditorPage` | 🔒 | Edit page — dynamic locale tabs |
-| `/admin/design` | `DesignCustomizer` | 🔒 | Theme settings (built-in blog only) |
-| `/admin/media` | `MediaLibrary` | 🔒 | Upload, copy URL, delete images |
-| `/admin/comments` | `CommentsAdmin` | 🔒 | Moderate comments, bulk actions |
-| `/admin/webhooks` | `WebhooksAdmin` | 🔒 | Manage webhooks, test endpoints |
-| `/admin/apikeys` | `ApiKeysAdmin` | 🔒 | Manage API keys |
-| `/admin/users` | `UserManagement` | 🔒 ADMIN | Invite users, change roles, delete |
+| Path                    | Component          | Access   | Description                                                |
+| ----------------------- | ------------------ | -------- | ---------------------------------------------------------- |
+| `/`                     | `BlogFeedPage`     | Public   | Paginated post feed with search, sidebar, layout modes     |
+| `/posts/:slug`          | `BlogPostPage`     | Public   | Single post with SEO meta tags + language switcher         |
+| `/:slug`                | `CustomPageView`   | Public   | Custom CMS page (About, Contact, etc.) + language switcher |
+| `/login`                | `LoginPage`        | Public   | Email + password login                                     |
+| `/admin`                | `AdminDashboard`   | 🔒       | Stats dashboard + recent activity                          |
+| `/admin/posts/new`      | `PostEditorPage`   | 🔒       | Create post — dynamic locale tabs                          |
+| `/admin/posts/:id/edit` | `PostEditorPage`   | 🔒       | Edit post — dynamic locale tabs + revision history         |
+| `/admin/pages`          | `PagesAdmin`       | 🔒       | Custom pages list with translation count badges            |
+| `/admin/pages/new`      | `PageEditorPage`   | 🔒       | Create page — dynamic locale tabs                          |
+| `/admin/pages/:id/edit` | `PageEditorPage`   | 🔒       | Edit page — dynamic locale tabs                            |
+| `/admin/design`         | `DesignCustomizer` | 🔒       | Theme settings (built-in blog only)                        |
+| `/admin/media`          | `MediaLibrary`     | 🔒       | Upload, copy URL, delete images                            |
+| `/admin/comments`       | `CommentsAdmin`    | 🔒       | Moderate comments, bulk actions                            |
+| `/admin/webhooks`       | `WebhooksAdmin`    | 🔒       | Manage webhooks, test endpoints                            |
+| `/admin/apikeys`        | `ApiKeysAdmin`     | 🔒       | Manage API keys                                            |
+| `/admin/users`          | `UserManagement`   | 🔒 ADMIN | Invite users, change roles, delete                         |
 
 All admin routes are wrapped in `ProtectedRoute` (redirects to `/login`). All pages are lazy-loaded.
 
@@ -1328,11 +1355,12 @@ Page refresh:
 ```
 
 JWT payload:
+
 ```typescript
 type JwtPayload = {
-  sub:   string;                      // user id
-  email: string;
-  role:  "ADMIN" | "EDITOR" | "AUTHOR";
+  sub: string // user id
+  email: string
+  role: "ADMIN" | "EDITOR" | "AUTHOR"
 }
 ```
 
@@ -1340,13 +1368,14 @@ type JwtPayload = {
 
 ## Role System
 
-| Role | Can do |
-|---|---|
-| `AUTHOR` | Create posts, edit/delete **own** posts only |
+| Role     | Can do                                        |
+| -------- | --------------------------------------------- |
+| `AUTHOR` | Create posts, edit/delete **own** posts only  |
 | `EDITOR` | Create/edit/delete **any** post, manage pages |
-| `ADMIN` | Everything + user management, theme settings |
+| `ADMIN`  | Everything + user management, theme settings  |
 
 Role is enforced in the API via:
+
 - `requireRole(request, reply, "ADMIN")` — gate an entire route
 - `isOwnerOrMinRole(request, ownerId, "EDITOR")` — allow owner OR min role (used on PUT/DELETE posts)
 
@@ -1409,40 +1438,40 @@ In development, `/uploads/*` is proxied by Vite to the API (port 4000). In produ
 
 ### Root
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start API (4000) + Web (5173) in parallel |
-| `npm run build` | Build all packages |
-| `npm run db:migrate` | `prisma migrate deploy` — production |
-| `npm run db:migrate:dev` | `prisma migrate dev` — local dev |
-| `npm run db:seed` | Seed admin user + sample post |
-| `npm run db:studio` | Open Prisma Studio on port 5555 |
+| Command                  | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `npm run dev`            | Start API (4000) + Web (5173) in parallel |
+| `npm run build`          | Build all packages                        |
+| `npm run db:migrate`     | `prisma migrate deploy` — production      |
+| `npm run db:migrate:dev` | `prisma migrate dev` — local dev          |
+| `npm run db:seed`        | Seed admin user + sample post             |
+| `npm run db:studio`      | Open Prisma Studio on port 5555           |
 
 ### `packages/db`
 
-| Command | Description |
-|---|---|
-| `npm run generate` | Regenerate Prisma client after schema changes |
-| `npm run migrate` | `prisma migrate dev` |
-| `npm run migrate:deploy` | `prisma migrate deploy` |
-| `npm run seed` | Run seed |
-| `npm run studio` | Prisma Studio |
+| Command                  | Description                                   |
+| ------------------------ | --------------------------------------------- |
+| `npm run generate`       | Regenerate Prisma client after schema changes |
+| `npm run migrate`        | `prisma migrate dev`                          |
+| `npm run migrate:deploy` | `prisma migrate deploy`                       |
+| `npm run seed`           | Run seed                                      |
+| `npm run studio`         | Prisma Studio                                 |
 
 ### `apps/api`
 
-| Command | Description |
-|---|---|
-| `npm run dev` | `tsx watch src/server.ts` |
-| `npm run build` | Compile to `dist/` |
-| `npm run start` | `node dist/server.js` |
+| Command         | Description               |
+| --------------- | ------------------------- |
+| `npm run dev`   | `tsx watch src/server.ts` |
+| `npm run build` | Compile to `dist/`        |
+| `npm run start` | `node dist/server.js`     |
 
 ### `apps/web`
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Vite dev server + HMR |
-| `npm run build` | Type-check + Vite production build |
-| `npm run preview` | Preview production build locally |
+| Command           | Description                        |
+| ----------------- | ---------------------------------- |
+| `npm run dev`     | Vite dev server + HMR              |
+| `npm run build`   | Type-check + Vite production build |
+| `npm run preview` | Preview production build locally   |
 
 ---
 
@@ -1450,11 +1479,11 @@ In development, `/uploads/*` is proxied by Vite to the API (port 4000). In produ
 
 ### Services
 
-| Service | Image | Port | Description |
-|---|---|---|---|
-| `db` | `postgres:16-alpine` | `5432` | PostgreSQL |
-| `api` | Node 20 multi-stage | `4000` | Fastify API |
-| `web` | Node 20 build → Nginx | `80` | React SPA |
+| Service | Image                 | Port   | Description |
+| ------- | --------------------- | ------ | ----------- |
+| `db`    | `postgres:16-alpine`  | `5432` | PostgreSQL  |
+| `api`   | Node 20 multi-stage   | `4000` | Fastify API |
+| `web`   | Node 20 build → Nginx | `80`   | React SPA   |
 
 ### Production checklist
 
@@ -1488,17 +1517,17 @@ docker build -f apps/web/Dockerfile \
 
 ## Coding Conventions
 
-| Rule | Detail |
-|---|---|
-| **Arrow functions only** | No `function` declarations |
-| **Strict TypeScript** | `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true` |
-| **Zod at I/O boundaries** | Every request body is validated with `z.safeParse()` |
-| **No `dangerouslySetInnerHTML`** | `PostRenderer` uses pure React elements |
-| **`as any` only for stale Prisma types** | New schema fields need `prisma generate` after server restart on Windows — cast with a comment until then |
-| **CUID primary keys** | All models use `@default(cuid())` |
-| **Named exports for utilities** | Default exports only for pages / React components |
-| **i18n field access** | Never read `post.title` / `page.title` directly from the DB — always go through `pickTranslation()` / `flattenPost()` / `flattenPage()` helpers |
+| Rule                                     | Detail                                                                                                                                          |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Arrow functions only**                 | No `function` declarations                                                                                                                      |
+| **Strict TypeScript**                    | `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`                                                            |
+| **Zod at I/O boundaries**                | Every request body is validated with `z.safeParse()`                                                                                            |
+| **No `dangerouslySetInnerHTML`**         | `PostRenderer` uses pure React elements                                                                                                         |
+| **`as any` only for stale Prisma types** | New schema fields need `prisma generate` after server restart on Windows — cast with a comment until then                                       |
+| **CUID primary keys**                    | All models use `@default(cuid())`                                                                                                               |
+| **Named exports for utilities**          | Default exports only for pages / React components                                                                                               |
+| **i18n field access**                    | Never read `post.title` / `page.title` directly from the DB — always go through `pickTranslation()` / `flattenPost()` / `flattenPage()` helpers |
 
 ---
 
-*Built for developers who want full control over their content.*
+_Built for developers who want full control over their content._

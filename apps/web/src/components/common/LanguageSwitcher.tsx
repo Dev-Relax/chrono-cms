@@ -1,10 +1,10 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
-import { SUPPORTED_LOCALES, LOCALE_FLAGS, type SupportedLocale } from "../../i18n/index.js";
+import React from "react"
+import { useTranslation } from "react-i18next"
+import { SUPPORTED_LOCALES, LOCALE_FLAGS, type SupportedLocale } from "../../i18n/index.js"
 
 export const LanguageSwitcher: React.FC = () => {
-  const { i18n, t } = useTranslation();
-  const current = (i18n.language?.slice(0, 2) ?? "en") as SupportedLocale;
+  const { i18n, t } = useTranslation()
+  const current = (i18n.language?.slice(0, 2) ?? "en") as SupportedLocale
 
   return (
     <div className="px-3 pb-2">
@@ -13,7 +13,7 @@ export const LanguageSwitcher: React.FC = () => {
       </p>
       <div className="flex gap-1.5">
         {SUPPORTED_LOCALES.map((locale) => {
-          const isActive = current === locale;
+          const isActive = current === locale
           return (
             <button
               key={locale}
@@ -36,9 +36,9 @@ export const LanguageSwitcher: React.FC = () => {
               <span className="text-[13px] leading-none">{LOCALE_FLAGS[locale]}</span>
               <span>{locale.toUpperCase()}</span>
             </button>
-          );
+          )
         })}
       </div>
     </div>
-  );
-};
+  )
+}

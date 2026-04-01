@@ -1,14 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { postsApi, revisionsApi, ApiError } from "../../lib/api.js";
-import type { PostStatus, TipTapDoc } from "../../types/index.js";
-import type { TranslationPayload } from "../../lib/api.js";
-import { RichTextEditor } from "../../components/editor/RichTextEditor.js";
-import { PostRenderer } from "../../components/editor/PostRenderer.js";
-import { Layout } from "../../components/common/Layout.js";
-import { SkeletonEditorForm, SkeletonPageHeader } from "../../components/common/Skeleton.js";
-import { readingTimeLabel } from "../../lib/readingTime.js";
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
+import { postsApi, revisionsApi, ApiError } from "../../lib/api.js"
+import type { PostStatus, TipTapDoc } from "../../types/index.js"
+import type { TranslationPayload } from "../../lib/api.js"
+import { RichTextEditor } from "../../components/editor/RichTextEditor.js"
+import { EditorToolbar } from "../../components/editor/EditorToolbar.js"
+import { Layout } from "../../components/common/Layout.js"
+import { SkeletonEditorForm, SkeletonPageHeader } from "../../components/common/Skeleton.js"
+import { readingTimeLabel } from "../../lib/readingTime.js"
+import type { Editor } from "@tiptap/core"
 
 const slugify = (text: string): string =>
   text
@@ -16,64 +17,122 @@ const slugify = (text: string): string =>
     .trim()
     .replace(/[^\w\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|-+$/g, "")
 
-const EMPTY_DOC: TipTapDoc = { type: "doc", content: [{ type: "paragraph" }] };
+const EMPTY_DOC: TipTapDoc = { type: "doc", content: [{ type: "paragraph" }] }
 
 // common BCP-47 → flag emoji; falls back to 🌐
 const KNOWN_FLAGS: Record<string, string> = {
-  en: "🇬🇧", "en-us": "🇺🇸", "en-gb": "🇬🇧", "en-au": "🇦🇺", "en-ca": "🇨🇦",
-  fr: "🇫🇷", "fr-be": "🇧🇪", "fr-ch": "🇨🇭", "fr-ca": "🇨🇦",
-  de: "🇩🇪", "de-at": "🇦🇹", "de-ch": "🇨🇭",
-  es: "🇪🇸", "es-mx": "🇲🇽", "es-ar": "🇦🇷", "es-co": "🇨🇴",
-  it: "🇮🇹", pt: "🇵🇹", "pt-br": "🇧🇷",
-  nl: "🇳🇱", "nl-be": "🇧🇪",
-  ru: "🇷🇺", uk: "🇺🇦", pl: "🇵🇱", cs: "🇨🇿", sk: "🇸🇰", ro: "🇷🇴",
-  sv: "🇸🇪", no: "🇳🇴", da: "🇩🇰", fi: "🇫🇮", nb: "🇳🇴",
-  ja: "🇯🇵", ko: "🇰🇷", zh: "🇨🇳", "zh-tw": "🇹🇼", "zh-hk": "🇭🇰",
-  ar: "🇸🇦", he: "🇮🇱", tr: "🇹🇷", fa: "🇮🇷",
-  hi: "🇮🇳", bn: "🇧🇩", vi: "🇻🇳", th: "🇹🇭", id: "🇮🇩", ms: "🇲🇾",
-  el: "🇬🇷", hu: "🇭🇺", bg: "🇧🇬", hr: "🇭🇷", sr: "🇷🇸",
-  ca: "🏳️", eu: "🏳️", gl: "🏳️",
-};
-const getLocaleFlag = (locale: string) =>
-  KNOWN_FLAGS[locale.toLowerCase()] ?? "🌐";
+  en: "🇬🇧",
+  "en-us": "🇺🇸",
+  "en-gb": "🇬🇧",
+  "en-au": "🇦🇺",
+  "en-ca": "🇨🇦",
+  fr: "🇫🇷",
+  "fr-be": "🇧🇪",
+  "fr-ch": "🇨🇭",
+  "fr-ca": "🇨🇦",
+  de: "🇩🇪",
+  "de-at": "🇦🇹",
+  "de-ch": "🇨🇭",
+  es: "🇪🇸",
+  "es-mx": "🇲🇽",
+  "es-ar": "🇦🇷",
+  "es-co": "🇨🇴",
+  it: "🇮🇹",
+  pt: "🇵🇹",
+  "pt-br": "🇧🇷",
+  nl: "🇳🇱",
+  "nl-be": "🇧🇪",
+  ru: "🇷🇺",
+  uk: "🇺🇦",
+  pl: "🇵🇱",
+  cs: "🇨🇿",
+  sk: "🇸🇰",
+  ro: "🇷🇴",
+  sv: "🇸🇪",
+  no: "🇳🇴",
+  da: "🇩🇰",
+  fi: "🇫🇮",
+  nb: "🇳🇴",
+  ja: "🇯🇵",
+  ko: "🇰🇷",
+  zh: "🇨🇳",
+  "zh-tw": "🇹🇼",
+  "zh-hk": "🇭🇰",
+  ar: "🇸🇦",
+  he: "🇮🇱",
+  tr: "🇹🇷",
+  fa: "🇮🇷",
+  hi: "🇮🇳",
+  bn: "🇧🇩",
+  vi: "🇻🇳",
+  th: "🇹🇭",
+  id: "🇮🇩",
+  ms: "🇲🇾",
+  el: "🇬🇷",
+  hu: "🇭🇺",
+  bg: "🇧🇬",
+  hr: "🇭🇷",
+  sr: "🇷🇸",
+  ca: "🏳️",
+  eu: "🏳️",
+  gl: "🏳️",
+}
+const getLocaleFlag = (locale: string) => KNOWN_FLAGS[locale.toLowerCase()] ?? "🌐"
 
-const COMMON_LOCALES = ["fr", "es", "de", "it", "pt", "nl", "ru", "ja", "ko", "zh", "ar", "pl", "tr"];
+const COMMON_LOCALES = [
+  "fr",
+  "es",
+  "de",
+  "it",
+  "pt",
+  "nl",
+  "ru",
+  "ja",
+  "ko",
+  "zh",
+  "ar",
+  "pl",
+  "tr",
+]
 
 interface LocaleData {
-  title:           string;
-  slug:            string;
-  content:         TipTapDoc;
-  excerpt:         string;
-  metaTitle:       string;
-  metaDescription: string;
-  ogImage:         string;
+  title: string
+  slug: string
+  content: TipTapDoc
+  excerpt: string
+  metaTitle: string
+  metaDescription: string
+  ogImage: string
 }
 
 const emptyLocale = (): LocaleData => ({
-  title: "", slug: "", content: EMPTY_DOC,
-  excerpt: "", metaTitle: "", metaDescription: "", ogImage: "",
-});
+  title: "",
+  slug: "",
+  content: EMPTY_DOC,
+  excerpt: "",
+  metaTitle: "",
+  metaDescription: "",
+  ogImage: "",
+})
 
-type LocaleMap = Record<string, LocaleData>;
+type LocaleMap = Record<string, LocaleData>
 
 interface RevisionMeta {
-  id:        string;
-  locale:    string;
-  title:     string;
-  createdAt: string;
-  user:      { id: string; name: string | null; email: string };
+  id: string
+  locale: string
+  title: string
+  createdAt: string
+  user: { id: string; name: string | null; email: string }
 }
 
-type ViewMode = "editor" | "preview" | "split";
-
 const Collapsible: React.FC<{
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
+  title: string
+  children: React.ReactNode
+  defaultOpen?: boolean
 }> = ({ title, children, defaultOpen = false }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60">
       <button
@@ -81,19 +140,21 @@ const Collapsible: React.FC<{
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between px-5 py-3 text-left"
       >
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          {title}
+        </span>
         <span className="text-slate-600 text-sm">{open ? "▲" : "▼"}</span>
       </button>
       {open && <div className="px-5 pb-5 border-t border-slate-800 pt-4">{children}</div>}
     </div>
-  );
-};
+  )
+}
 
 const Field: React.FC<{
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-  className?: string;
+  label: string
+  hint?: string
+  children: React.ReactNode
+  className?: string
 }> = ({ label, hint, children, className }) => (
   <div className={className}>
     <label className="block mb-1 text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -102,230 +163,257 @@ const Field: React.FC<{
     {children}
     {hint && <p className="mt-1 text-xs text-slate-600">{hint}</p>}
   </div>
-);
+)
 
 const inputCls =
   "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm " +
   "text-slate-100 placeholder-slate-600 " +
-  "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+  "focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
 const PostEditorPage: React.FC = () => {
-  const { id } = useParams<{ id?: string }>();
-  const isEditing = Boolean(id);
-  const navigate  = useNavigate();
-  const { t }     = useTranslation();
+  const { id } = useParams<{ id?: string }>()
+  const isEditing = Boolean(id)
+  const navigate = useNavigate()
+  const { t } = useTranslation()
 
-  const [activeLocale, setActiveLocale]   = useState<string>("en");
-  const [locales, setLocales]             = useState<LocaleMap>({ en: emptyLocale() });
-  const [defaultLocale, setDefaultLocale] = useState<string>("en");
+  const [activeLocale, setActiveLocale] = useState<string>("en")
+  const [locales, setLocales] = useState<LocaleMap>({ en: emptyLocale() })
+  const [defaultLocale, setDefaultLocale] = useState<string>("en")
 
-  const [addingLocale, setAddingLocale]   = useState(false);
-  const [newLocaleInput, setNewLocaleInput] = useState("");
-  const addInputRef = useRef<HTMLInputElement>(null);
+  const [addingLocale, setAddingLocale] = useState(false)
+  const [newLocaleInput, setNewLocaleInput] = useState("")
+  const addInputRef = useRef<HTMLInputElement>(null)
 
-  const [tags, setTags]                 = useState("");
-  const [status, setStatus]             = useState<PostStatus>("DRAFT");
-  const [featured, setFeatured]         = useState(false);
-  const [scheduledAt, setScheduledAt]   = useState("");
-  const [showSchedule, setShowSchedule] = useState(false);
+  const [tags, setTags] = useState("")
+  const [status, setStatus] = useState<PostStatus>("DRAFT")
+  const [featured, setFeatured] = useState(false)
+  const [scheduledAt, setScheduledAt] = useState("")
+  const [showSchedule, setShowSchedule] = useState(false)
 
-  const [loading, setLoading]   = useState(isEditing);
-  const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [saved, setSaved]       = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("split");
+  const [loading, setLoading] = useState(isEditing)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(true)
 
-  const [showRevisions, setShowRevisions] = useState(false);
-  const [revisions, setRevisions]         = useState<RevisionMeta[]>([]);
-  const [revLoading, setRevLoading]       = useState(false);
-  const [restoring, setRestoring]         = useState(false);
+  const [showRevisions, setShowRevisions] = useState(false)
+  const [revisions, setRevisions] = useState<RevisionMeta[]>([])
+  const [revLoading, setRevLoading] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+
+  // Editor instance — used by the lifted toolbar
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null)
 
   // Per-locale slug-touched tracking
-  const slugTouched = useRef<Record<string, boolean>>({});
+  const slugTouched = useRef<Record<string, boolean>>({})
 
-  const current = locales[activeLocale] ?? emptyLocale();
+  const current = locales[activeLocale] ?? emptyLocale()
 
   const setCurrentField = <K extends keyof LocaleData>(field: K, value: LocaleData[K]) => {
-    setLocales((prev) => ({ ...prev, [activeLocale]: { ...emptyLocale(), ...prev[activeLocale], [field]: value } }));
-    setSaved(false);
-  };
+    setLocales((prev) => ({
+      ...prev,
+      [activeLocale]: {
+        ...emptyLocale(),
+        ...prev[activeLocale],
+        [field]: value,
+      },
+    }))
+    setSaved(false)
+  }
 
   useEffect(() => {
-    if (!isEditing || !id) return;
+    if (!isEditing || !id) return
     postsApi
       .adminGet(id)
       .then(({ data }) => {
-        setStatus(data.status);
-        setFeatured(data.featured);
-        setTags(data.tags.map(({ tag }) => tag.slug).join(", "));
+        setStatus(data.status)
+        setFeatured(data.featured)
+        setTags(data.tags.map(({ tag }) => tag.slug).join(", "))
         if (data.defaultLocale) {
-          setDefaultLocale(data.defaultLocale);
-          setActiveLocale(data.defaultLocale);
+          setDefaultLocale(data.defaultLocale)
+          setActiveLocale(data.defaultLocale)
         }
         if (data.scheduledAt) {
-          setScheduledAt(data.scheduledAt.slice(0, 16));
-          setShowSchedule(true);
+          setScheduledAt(data.scheduledAt.slice(0, 16))
+          setShowSchedule(true)
         }
-        const map: LocaleMap = {};
+        const map: LocaleMap = {}
         for (const tr of data.translations ?? []) {
           map[tr.locale] = {
-            title:           tr.title,
-            slug:            tr.slug,
-            content:         tr.content,
-            excerpt:         tr.excerpt         ?? "",
-            metaTitle:       tr.metaTitle       ?? "",
+            title: tr.title,
+            slug: tr.slug,
+            content: tr.content,
+            excerpt: tr.excerpt ?? "",
+            metaTitle: tr.metaTitle ?? "",
             metaDescription: tr.metaDescription ?? "",
-            ogImage:         tr.ogImage         ?? "",
-          };
-          slugTouched.current[tr.locale] = true;
+            ogImage: tr.ogImage ?? "",
+          }
+          slugTouched.current[tr.locale] = true
         }
-        if (Object.keys(map).length === 0) map["en"] = emptyLocale();
-        setLocales(map);
-        setSaved(true);
+        if (Object.keys(map).length === 0) map["en"] = emptyLocale()
+        setLocales(map)
+        setSaved(true)
       })
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [id, isEditing]);
+      .finally(() => setLoading(false))
+  }, [id, isEditing])
 
   // Focus the add-locale input when it appears
   useEffect(() => {
-    if (addingLocale) addInputRef.current?.focus();
-  }, [addingLocale]);
+    if (addingLocale) addInputRef.current?.focus()
+  }, [addingLocale])
 
   const handleTitleChange = (value: string) => {
     setLocales((prev) => ({
       ...prev,
       [activeLocale]: {
-        ...emptyLocale(), ...prev[activeLocale],
+        ...emptyLocale(),
+        ...prev[activeLocale],
         title: value,
-        slug:  slugTouched.current[activeLocale] ? prev[activeLocale]?.slug ?? "" : slugify(value),
+        slug: slugTouched.current[activeLocale] ? (prev[activeLocale]?.slug ?? "") : slugify(value),
       },
-    }));
-    setSaved(false);
-  };
+    }))
+    setSaved(false)
+  }
 
   const handleSlugChange = (value: string) => {
-    slugTouched.current[activeLocale] = true;
-    setCurrentField("slug", slugify(value));
-  };
+    slugTouched.current[activeLocale] = true
+    setCurrentField("slug", slugify(value))
+  }
 
-  const handleContentChange = useCallback((doc: TipTapDoc) => {
-    setLocales((prev) => ({ ...prev, [activeLocale]: { ...emptyLocale(), ...prev[activeLocale], content: doc } }));
-    setSaved(false);
-  }, [activeLocale]);
+  const handleContentChange = useCallback(
+    (doc: TipTapDoc) => {
+      setLocales((prev) => ({
+        ...prev,
+        [activeLocale]: {
+          ...emptyLocale(),
+          ...prev[activeLocale],
+          content: doc,
+        },
+      }))
+      setSaved(false)
+    },
+    [activeLocale],
+  )
 
   const commitAddLocale = (code: string) => {
-    const normalized = code.trim().toLowerCase().slice(0, 10);
+    const normalized = code.trim().toLowerCase().slice(0, 10)
     if (!normalized || locales[normalized]) {
-      setAddingLocale(false);
-      setNewLocaleInput("");
-      return;
+      setAddingLocale(false)
+      setNewLocaleInput("")
+      return
     }
-    setLocales((prev) => ({ ...prev, [normalized]: emptyLocale() }));
-    setActiveLocale(normalized);
-    setAddingLocale(false);
-    setNewLocaleInput("");
-    setSaved(false);
-  };
+    setLocales((prev) => ({ ...prev, [normalized]: emptyLocale() }))
+    setActiveLocale(normalized)
+    setAddingLocale(false)
+    setNewLocaleInput("")
+    setSaved(false)
+  }
 
   const removeLocale = (locale: string) => {
-    if (locale === defaultLocale) return;
-    if (Object.keys(locales).length <= 1) return;
+    if (locale === defaultLocale) return
+    if (Object.keys(locales).length <= 1) return
     setLocales((prev) => {
-      const next = { ...prev };
-      delete next[locale];
-      return next;
-    });
-    if (activeLocale === locale) setActiveLocale(defaultLocale);
-    setSaved(false);
-  };
+      const next = { ...prev }
+      delete next[locale]
+      return next
+    })
+    if (activeLocale === locale) setActiveLocale(defaultLocale)
+    setSaved(false)
+  }
 
   const save = async (overrideStatus?: PostStatus) => {
-    const defaultData = locales[defaultLocale];
+    const defaultData = locales[defaultLocale]
     if (!defaultData?.title.trim()) {
-      setError(t("editor.titleRequired"));
-      return;
+      setError(t("editor.titleRequired"))
+      return
     }
 
-    setSaving(true);
-    setError(null);
+    setSaving(true)
+    setError(null)
 
-    const translations: Record<string, TranslationPayload> = {};
+    const translations: Record<string, TranslationPayload> = {}
     for (const loc of Object.keys(locales)) {
-      const d = locales[loc];
-      if (!d?.title.trim()) continue;
+      const d = locales[loc]
+      if (!d?.title.trim()) continue
       translations[loc] = {
-        title:           d.title.trim(),
-        slug:            d.slug || slugify(d.title),
-        content:         d.content as unknown as Record<string, unknown>,
-        excerpt:         d.excerpt.trim()         || undefined,
-        metaTitle:       d.metaTitle.trim()       || undefined,
+        title: d.title.trim(),
+        slug: d.slug || slugify(d.title),
+        content: d.content as unknown as Record<string, unknown>,
+        excerpt: d.excerpt.trim() || undefined,
+        metaTitle: d.metaTitle.trim() || undefined,
         metaDescription: d.metaDescription.trim() || undefined,
-        ogImage:         d.ogImage.trim()         || undefined,
-      };
+        ogImage: d.ogImage.trim() || undefined,
+      }
     }
 
     const payload = {
       defaultLocale,
       translations,
-      status:      overrideStatus ?? status,
+      status: overrideStatus ?? status,
       featured,
       scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
-      tags:        tags.split(",").map((s) => s.trim()).filter(Boolean),
-    };
+      tags: tags
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    }
 
     try {
       if (isEditing && id) {
-        await postsApi.update(id, payload);
+        await postsApi.update(id, payload)
       } else {
-        const { data: created } = await postsApi.create(payload);
-        navigate(`/admin/posts/${created.id}/edit`, { replace: true });
+        const { data: created } = await postsApi.create(payload)
+        navigate(`/admin/posts/${created.id}/edit`, { replace: true })
       }
-      setStatus(overrideStatus ?? status);
-      setSaved(true);
+      setStatus(overrideStatus ?? status)
+      setSaved(true)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("editor.saveFailed"));
+      setError(err instanceof ApiError ? err.message : t("editor.saveFailed"))
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const openRevisions = async () => {
-    if (!id) return;
-    setShowRevisions(true);
-    setRevLoading(true);
+    if (!id) return
+    setShowRevisions(true)
+    setRevLoading(true)
     try {
-      const { data } = await revisionsApi.list(id, activeLocale);
-      setRevisions(data as RevisionMeta[]);
-    } catch { /* ignore */ }
-    finally { setRevLoading(false); }
-  };
+      const { data } = await revisionsApi.list(id, activeLocale)
+      setRevisions(data as RevisionMeta[])
+    } catch {
+      /* ignore */
+    } finally {
+      setRevLoading(false)
+    }
+  }
 
   const handleRestore = async (revId: string) => {
-    if (!id) return;
-    if (!confirm(t("editor.restoreConfirm"))) return;
-    setRestoring(true);
+    if (!id) return
+    if (!confirm(t("editor.restoreConfirm"))) return
+    setRestoring(true)
     try {
-      const { data: restored } = await revisionsApi.restore(id, revId);
-      const restoredTrans = restored.translations?.find((tr) => tr.locale === activeLocale);
+      const { data: restored } = await revisionsApi.restore(id, revId)
+      const restoredTrans = restored.translations?.find((tr) => tr.locale === activeLocale)
       if (restoredTrans) {
         setLocales((prev) => ({
           ...prev,
           [activeLocale]: {
-            ...emptyLocale(), ...prev[activeLocale],
-            title:   restoredTrans.title,
+            ...emptyLocale(),
+            ...prev[activeLocale],
+            title: restoredTrans.title,
             content: restoredTrans.content,
           },
-        }));
+        }))
       }
-      setSaved(false);
-      setShowRevisions(false);
+      setSaved(false)
+      setShowRevisions(false)
     } catch (err) {
-      alert((err as Error).message);
+      alert((err as Error).message)
     } finally {
-      setRestoring(false);
+      setRestoring(false)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -333,19 +421,19 @@ const PostEditorPage: React.FC = () => {
         <SkeletonPageHeader />
         <SkeletonEditorForm />
       </Layout>
-    );
+    )
   }
 
-  const serpTitle = current.metaTitle.trim() || current.title.trim() || "Post title";
-  const serpDesc  = current.metaDescription.trim() || current.excerpt.trim() || "No description.";
-  const serpSlug  = current.slug || slugify(current.title) || "post-slug";
-  const hasContent = current.title.trim().length > 0;
-  const activeLocaleKeys = Object.keys(locales);
+  const serpTitle = current.metaTitle.trim() || current.title.trim() || "Post title"
+  const serpDesc = current.metaDescription.trim() || current.excerpt.trim() || "No description."
+  const serpSlug = current.slug || slugify(current.title) || "post-slug"
+  const hasContent = current.title.trim().length > 0
+  const activeLocaleKeys = Object.keys(locales)
 
-  const localeHasContent = (l: string) => (locales[l]?.title ?? "").trim().length > 0;
+  const localeHasContent = (l: string) => (locales[l]?.title ?? "").trim().length > 0
 
   // Suggestions = common locales not yet added
-  const suggestions = COMMON_LOCALES.filter((l) => !locales[l]);
+  const suggestions = COMMON_LOCALES.filter((l) => !locales[l])
 
   return (
     <Layout admin>
@@ -362,34 +450,25 @@ const PostEditorPage: React.FC = () => {
           <span className="text-xs text-amber-500 font-medium">{t("editor.unsavedChanges")}</span>
         )}
 
-        <div className="flex rounded-lg border border-slate-700 overflow-hidden text-xs">
-          {(["editor", "split", "preview"] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={[
-                "px-3 py-1.5 capitalize font-medium transition-colors",
-                viewMode === mode ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-200",
-              ].join(" ")}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
+<div className="flex items-center gap-1.5">
           {showSchedule && (
             <input
               type="datetime-local"
               value={scheduledAt}
               min={new Date().toISOString().slice(0, 16)}
-              onChange={(e) => { setScheduledAt(e.target.value); setSaved(false); }}
+              onChange={(e) => {
+                setScheduledAt(e.target.value)
+                setSaved(false)
+              }}
               className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs
                          text-slate-300 focus:border-brand-500 focus:outline-none"
             />
           )}
           <button
-            onClick={() => { setShowSchedule((v) => !v); if (showSchedule) setScheduledAt(""); }}
+            onClick={() => {
+              setShowSchedule((v) => !v)
+              if (showSchedule) setScheduledAt("")
+            }}
             className={[
               "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
               showSchedule
@@ -437,12 +516,17 @@ const PostEditorPage: React.FC = () => {
         </p>
       )}
 
-      <div className="mb-4 grid gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5
-                      md:grid-cols-2 lg:grid-cols-4">
+      <div
+        className="mb-4 grid gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5
+                      md:grid-cols-2 lg:grid-cols-4"
+      >
         <Field label={t("editor.tagsLabel")} hint={t("editor.tagsHint")} className="lg:col-span-2">
           <input
             value={tags}
-            onChange={(e) => { setTags(e.target.value); setSaved(false); }}
+            onChange={(e) => {
+              setTags(e.target.value)
+              setSaved(false)
+            }}
             placeholder={t("editor.tagsPlaceholder")}
             className={inputCls + " text-slate-400"}
           />
@@ -451,7 +535,10 @@ const PostEditorPage: React.FC = () => {
         <Field label={t("editor.defaultLocale")}>
           <select
             value={defaultLocale}
-            onChange={(e) => { setDefaultLocale(e.target.value); setSaved(false); }}
+            onChange={(e) => {
+              setDefaultLocale(e.target.value)
+              setSaved(false)
+            }}
             className={inputCls}
           >
             {activeLocaleKeys.map((l) => (
@@ -466,7 +553,10 @@ const PostEditorPage: React.FC = () => {
           <div className="flex items-center gap-3 h-[38px]">
             <button
               type="button"
-              onClick={() => { setFeatured((f) => !f); setSaved(false); }}
+              onClick={() => {
+                setFeatured((f) => !f)
+                setSaved(false)
+              }}
               className={[
                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent",
                 "transition-colors duration-200 focus:outline-none",
@@ -475,11 +565,13 @@ const PostEditorPage: React.FC = () => {
               role="switch"
               aria-checked={featured}
             >
-              <span className={[
-                "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow",
-                "transform transition-transform duration-200",
-                featured ? "translate-x-5" : "translate-x-0",
-              ].join(" ")} />
+              <span
+                className={[
+                  "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow",
+                  "transform transition-transform duration-200",
+                  featured ? "translate-x-5" : "translate-x-0",
+                ].join(" ")}
+              />
             </button>
             <span className="text-sm text-slate-400">
               {featured ? t("editor.featuredOn") : t("editor.featuredOff")}
@@ -490,10 +582,10 @@ const PostEditorPage: React.FC = () => {
 
       <div className="mb-0 flex items-end gap-1 flex-wrap">
         {activeLocaleKeys.map((locale) => {
-          const isActive  = activeLocale === locale;
-          const hasFilled = localeHasContent(locale);
-          const isDefault = defaultLocale === locale;
-          const canRemove = !isDefault && activeLocaleKeys.length > 1;
+          const isActive = activeLocale === locale
+          const hasFilled = localeHasContent(locale)
+          const isDefault = defaultLocale === locale
+          const canRemove = !isDefault && activeLocaleKeys.length > 1
           return (
             <button
               key={locale}
@@ -515,7 +607,10 @@ const PostEditorPage: React.FC = () => {
               {isDefault && (
                 <span
                   title="Default locale"
-                  className={["text-[9px] leading-none", isActive ? "text-brand-400" : "text-slate-600"].join(" ")}
+                  className={[
+                    "text-[9px] leading-none",
+                    isActive ? "text-brand-400" : "text-slate-600",
+                  ].join(" ")}
                 >
                   ★
                 </span>
@@ -523,14 +618,20 @@ const PostEditorPage: React.FC = () => {
               {!hasFilled && (
                 <span
                   title="Translation missing"
-                  className={["h-1.5 w-1.5 rounded-full", isActive ? "bg-amber-400" : "bg-amber-600"].join(" ")}
+                  className={[
+                    "h-1.5 w-1.5 rounded-full",
+                    isActive ? "bg-amber-400" : "bg-amber-600",
+                  ].join(" ")}
                 />
               )}
               {canRemove && (
                 <span
                   role="button"
                   title={`Remove ${locale.toUpperCase()} translation`}
-                  onClick={(e) => { e.stopPropagation(); removeLocale(locale); }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeLocale(locale)
+                  }}
                   className={[
                     "ml-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px]",
                     "opacity-0 group-hover:opacity-100 transition-opacity",
@@ -543,19 +644,24 @@ const PostEditorPage: React.FC = () => {
                 </span>
               )}
             </button>
-          );
+          )
         })}
 
         {addingLocale ? (
-          <div className="relative flex items-end gap-1 rounded-t-lg border-l border-r border-t
-                          border-slate-700/50 bg-slate-950 px-3 py-2">
+          <div
+            className="relative flex items-end gap-1 rounded-t-lg border-l border-r border-t
+                          border-slate-700/50 bg-slate-950 px-3 py-2"
+          >
             <input
               ref={addInputRef}
               value={newLocaleInput}
               onChange={(e) => setNewLocaleInput(e.target.value.slice(0, 10))}
               onKeyDown={(e) => {
-                if (e.key === "Enter")  commitAddLocale(newLocaleInput);
-                if (e.key === "Escape") { setAddingLocale(false); setNewLocaleInput(""); }
+                if (e.key === "Enter") commitAddLocale(newLocaleInput)
+                if (e.key === "Escape") {
+                  setAddingLocale(false)
+                  setNewLocaleInput("")
+                }
               }}
               placeholder="e.g. es"
               className="w-20 bg-transparent font-mono text-xs text-slate-300 placeholder-slate-700
@@ -564,15 +670,24 @@ const PostEditorPage: React.FC = () => {
             <button
               onClick={() => commitAddLocale(newLocaleInput)}
               className="text-[10px] text-brand-400 hover:text-brand-300"
-            >✓</button>
+            >
+              ✓
+            </button>
             <button
-              onClick={() => { setAddingLocale(false); setNewLocaleInput(""); }}
+              onClick={() => {
+                setAddingLocale(false)
+                setNewLocaleInput("")
+              }}
               className="text-[10px] text-slate-600 hover:text-slate-400"
-            >✕</button>
+            >
+              ✕
+            </button>
             {/* Quick suggestions */}
             {suggestions.length > 0 && (
-              <div className="absolute left-0 top-full z-20 mt-1 flex flex-wrap gap-1
-                              rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl min-w-[180px]">
+              <div
+                className="absolute left-0 top-full z-20 mt-1 flex flex-wrap gap-1
+                              rounded-lg border border-slate-700 bg-slate-900 p-2 shadow-xl min-w-[180px]"
+              >
                 {suggestions.slice(0, 8).map((s) => (
                   <button
                     key={s}
@@ -603,8 +718,10 @@ const PostEditorPage: React.FC = () => {
 
       <div className="mb-4 rounded-b-xl rounded-tr-xl border border-slate-800 bg-slate-900/60 p-5">
         {!hasContent && activeLocale !== defaultLocale && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-800/50
-                          bg-amber-900/20 px-4 py-2.5 text-xs text-amber-400">
+          <div
+            className="mb-4 flex items-center gap-2 rounded-lg border border-amber-800/50
+                          bg-amber-900/20 px-4 py-2.5 text-xs text-amber-400"
+          >
             <span>⚠</span>
             <span>
               {t("editor.translationMissing")}{" "}
@@ -665,7 +782,9 @@ const PostEditorPage: React.FC = () => {
                 >
                   <textarea
                     value={current.metaDescription}
-                    onChange={(e) => setCurrentField("metaDescription", e.target.value.slice(0, 500))}
+                    onChange={(e) =>
+                      setCurrentField("metaDescription", e.target.value.slice(0, 500))
+                    }
                     rows={3}
                     placeholder={current.excerpt || "Brief description for search engines…"}
                     className={inputCls + " resize-none"}
@@ -690,8 +809,12 @@ const PostEditorPage: React.FC = () => {
                   <div className="text-xs text-green-600 font-mono truncate">
                     chronos-cms.example.com/{activeLocale}/posts/{serpSlug}
                   </div>
-                  <div className="text-base text-blue-400 line-clamp-1 font-medium">{serpTitle}</div>
-                  <div className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{serpDesc}</div>
+                  <div className="text-base text-blue-400 line-clamp-1 font-medium">
+                    {serpTitle}
+                  </div>
+                  <div className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    {serpDesc}
+                  </div>
                 </div>
 
                 {/* hreflang note */}
@@ -709,7 +832,9 @@ const PostEditorPage: React.FC = () => {
                       src={current.ogImage}
                       alt="OG preview"
                       className="w-full rounded-lg border border-slate-700 object-cover max-h-40"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).style.display = "none"
+                      }}
                     />
                   </div>
                 )}
@@ -726,7 +851,12 @@ const PostEditorPage: React.FC = () => {
               {t("editor.revisionsTitle")}
               <span className="ml-2 font-mono text-brand-400">[{activeLocale.toUpperCase()}]</span>
             </h2>
-            <button onClick={() => setShowRevisions(false)} className="text-slate-600 hover:text-slate-300 text-sm">✕</button>
+            <button
+              onClick={() => setShowRevisions(false)}
+              className="text-slate-600 hover:text-slate-300 text-sm"
+            >
+              ✕
+            </button>
           </div>
           {revLoading ? (
             <div className="flex justify-center py-8">
@@ -737,15 +867,22 @@ const PostEditorPage: React.FC = () => {
           ) : (
             <ul className="divide-y divide-slate-800 max-h-72 overflow-y-auto">
               {revisions.map((rev) => (
-                <li key={rev.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-900 transition-colors">
+                <li
+                  key={rev.id}
+                  className="flex items-center justify-between px-5 py-3 hover:bg-slate-900 transition-colors"
+                >
                   <div>
                     <p className="text-sm font-medium text-slate-200">{rev.title}</p>
                     <p className="text-xs text-slate-500">
                       {new Date(rev.createdAt).toLocaleString("en-US", {
-                        month: "short", day: "numeric", year: "numeric",
-                        hour: "2-digit", minute: "2-digit",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
-                      {" · "}{rev.user.name ?? rev.user.email}
+                      {" · "}
+                      {rev.user.name ?? rev.user.email}
                     </p>
                   </div>
                   <button
@@ -764,38 +901,26 @@ const PostEditorPage: React.FC = () => {
         </div>
       )}
 
-      <div className={["gap-6", viewMode === "split" ? "grid md:grid-cols-2" : "flex flex-col"].join(" ")}>
-        {(viewMode === "editor" || viewMode === "split") && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden flex flex-col">
-            <RichTextEditor
-              key={activeLocale}
-              content={current.content}
-              onChange={handleContentChange}
-              placeholder={t("editor.contentPlaceholder")}
-              className="min-h-[60vh]"
-            />
-          </div>
-        )}
+      {/* Sticky toolbar — spans full width above the editor */}
+      {editorInstance && (
+        <div className="sticky top-0 z-20 -mx-6 px-6 bg-slate-950 shadow-sm">
+          <EditorToolbar editor={editorInstance} />
+        </div>
+      )}
 
-        {(viewMode === "preview" || viewMode === "split") && (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
-            <p className="mb-4 text-xs font-medium uppercase tracking-wider text-slate-600">
-              {t("editor.previewLabel")}
-            </p>
-            {current.title && (
-              <h1 className="mb-2 text-3xl font-bold text-slate-50">{current.title}</h1>
-            )}
-            {featured && (
-              <span className="mb-4 inline-block text-xs font-semibold text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded-full">
-                ★ {t("editor.featuredOn")}
-              </span>
-            )}
-            <PostRenderer doc={current.content} />
-          </div>
-        )}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 flex flex-col">
+        <RichTextEditor
+          key={activeLocale}
+          content={current.content}
+          onChange={handleContentChange}
+          onEditorReady={setEditorInstance}
+          hideToolbar
+          placeholder={t("editor.contentPlaceholder")}
+          className="min-h-[60vh]"
+        />
       </div>
     </Layout>
-  );
-};
+  )
+}
 
-export default PostEditorPage;
+export default PostEditorPage

@@ -1,74 +1,88 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { apiKeysApi, ApiError } from "../../lib/api.js";
-import { Layout } from "../../components/common/Layout.js";
-import { SkeletonTableRows } from "../../components/common/Skeleton.js";
+import React, { useCallback, useEffect, useState } from "react"
+import { apiKeysApi, ApiError } from "../../lib/api.js"
+import { Layout } from "../../components/common/Layout.js"
+import { SkeletonTableRows } from "../../components/common/Skeleton.js"
 
 interface ApiKeyRecord {
-  id:         string;
-  name:       string;
-  prefix:     string;
-  lastUsedAt: string | null;
-  createdAt:  string;
-  user:       { id: string; name: string | null; email: string };
+  id: string
+  name: string
+  prefix: string
+  lastUsedAt: string | null
+  createdAt: string
+  user: { id: string; name: string | null; email: string }
 }
 
 const ApiKeysAdmin: React.FC = () => {
-  const [keys, setKeys]           = useState<ApiKeyRecord[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [showForm, setShowForm]   = useState(false);
-  const [name, setName]           = useState("");
-  const [saving, setSaving]       = useState(false);
-  const [newKey, setNewKey]       = useState<string | null>(null);
-  const [copied, setCopied]       = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [keys, setKeys] = useState<ApiKeyRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [newKey, setNewKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true);
-    apiKeysApi.list()
+    setLoading(true)
+    apiKeysApi
+      .list()
       .then(({ data }) => setKeys(data as ApiKeyRecord[]))
       .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load()
+  }, [load])
 
   const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    setError(null);
+    e.preventDefault()
+    if (!name.trim()) return
+    setSaving(true)
+    setError(null)
     try {
-      const { data } = await apiKeysApi.create(name.trim());
-      setNewKey(data.key);
-      setName("");
-      setShowForm(false);
-      load();
+      const { data } = await apiKeysApi.create(name.trim())
+      setNewKey(data.key)
+      setName("")
+      setShowForm(false)
+      load()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Create failed");
+      setError(err instanceof ApiError ? err.message : "Create failed")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleRevoke = async (k: ApiKeyRecord) => {
-    if (!confirm(`Revoke key "${k.name}"? This cannot be undone and any service using it will lose access.`)) return;
+    if (
+      !confirm(
+        `Revoke key "${k.name}"? This cannot be undone and any service using it will lose access.`,
+      )
+    )
+      return
     try {
-      await apiKeysApi.delete(k.id);
-      load();
+      await apiKeysApi.delete(k.id)
+      load()
     } catch (err) {
-      alert((err as Error).message);
+      alert((err as Error).message)
     }
-  };
+  }
 
   const handleCopy = async () => {
-    if (!newKey) return;
-    await navigator.clipboard.writeText(newKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    if (!newKey) return
+    await navigator.clipboard.writeText(newKey)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const fmt = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Never";
+    d
+      ? new Date(d).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "Never"
 
   return (
     <Layout admin>
@@ -80,7 +94,10 @@ const ApiKeysAdmin: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => { setShowForm((v) => !v); setError(null); }}
+          onClick={() => {
+            setShowForm((v) => !v)
+            setError(null)
+          }}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
         >
           + New key
@@ -116,16 +133,22 @@ const ApiKeysAdmin: React.FC = () => {
       )}
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">{error}</p>
+        <p className="mb-4 rounded-lg bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          {error}
+        </p>
       )}
 
       {showForm && (
         <form
-          onSubmit={(e) => { void handleCreate(e); }}
+          onSubmit={(e) => {
+            void handleCreate(e)
+          }}
           className="mb-6 flex items-end gap-3 rounded-xl border border-slate-700 bg-slate-900/80 p-5"
         >
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500">Key name</label>
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-500">
+              Key name
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -136,13 +159,15 @@ const ApiKeysAdmin: React.FC = () => {
             />
           </div>
           <button
-            type="submit" disabled={saving}
+            type="submit"
+            disabled={saving}
             className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
             {saving ? "Creating…" : "Create"}
           </button>
           <button
-            type="button" onClick={() => setShowForm(false)}
+            type="button"
+            onClick={() => setShowForm(false)}
             className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             Cancel
@@ -174,7 +199,12 @@ const ApiKeysAdmin: React.FC = () => {
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900">
                 {["Name", "Key prefix", "Created by", "Created", "Last used", ""].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">{h}</th>
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -201,7 +231,7 @@ const ApiKeysAdmin: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
-export default ApiKeysAdmin;
+export default ApiKeysAdmin

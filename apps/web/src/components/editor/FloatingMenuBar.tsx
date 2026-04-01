@@ -1,20 +1,20 @@
-import React from "react";
-import type { Editor } from "@tiptap/react";
+import React from "react"
+import type { Editor } from "@tiptap/react"
 
-type Props = { editor: Editor };
+type Props = { editor: Editor }
 
 type BlockButtonProps = {
-  icon: string;
-  label: string;
-  onClick: () => void;
-};
+  icon: string
+  label: string
+  onClick: () => void
+}
 
 const BlockButton: React.FC<BlockButtonProps> = ({ icon, label, onClick }) => (
   <button
     type="button"
     onMouseDown={(e) => {
-      e.preventDefault();
-      onClick();
+      e.preventDefault()
+      onClick()
     }}
     title={label}
     className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-slate-300
@@ -23,7 +23,7 @@ const BlockButton: React.FC<BlockButtonProps> = ({ icon, label, onClick }) => (
     <span className="text-base leading-none">{icon}</span>
     <span>{label}</span>
   </button>
-);
+)
 
 export const FloatingMenuBar: React.FC<Props> = ({ editor }) => (
   <>
@@ -58,4 +58,4 @@ export const FloatingMenuBar: React.FC<Props> = ({ editor }) => (
       onClick={() => editor.chain().focus().toggleBlockquote().run()}
     />
   </>
-);
+)

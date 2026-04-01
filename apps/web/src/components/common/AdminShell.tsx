@@ -1,18 +1,18 @@
-import React, { useTransition } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { AdminSidebar, AdminShellContext, NavTransitionContext } from "./Layout.js";
-import { SkeletonPageHeader, SkeletonTableRows } from "./Skeleton.js";
+import React, { useTransition } from "react"
+import { Outlet, useLocation } from "react-router-dom"
+import { AdminSidebar, AdminShellContext, NavTransitionContext } from "./Layout.js"
+import { SkeletonPageHeader, SkeletonTableRows } from "./Skeleton.js"
 
 const AdminContentSkeleton: React.FC = () => (
   <>
     <SkeletonPageHeader />
     <SkeletonTableRows rows={7} cols={4} />
   </>
-);
+)
 
 export const AdminShell: React.FC = () => {
-  const [isPending, startTransition] = useTransition();
-  const location = useLocation();
+  const [isPending, startTransition] = useTransition()
+  const location = useLocation()
 
   return (
     <AdminShellContext.Provider value={true}>
@@ -35,5 +35,5 @@ export const AdminShell: React.FC = () => {
         </div>
       </NavTransitionContext.Provider>
     </AdminShellContext.Provider>
-  );
-};
+  )
+}

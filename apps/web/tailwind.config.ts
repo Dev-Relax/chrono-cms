@@ -1,5 +1,5 @@
-import type { Config } from "tailwindcss";
-import typography from "@tailwindcss/typography";
+import type { Config } from "tailwindcss"
+import typography from "@tailwindcss/typography"
 
 const config: Config = {
   // Enable class-based dark mode (toggled by adding "dark" to <html>)
@@ -17,7 +17,7 @@ const config: Config = {
         // The `<alpha-value>` placeholder is replaced by Tailwind when opacity
         // modifiers are used, e.g. bg-brand-500/30 → rgb(var(…) / 0.3).
         brand: {
-          50:  "rgb(var(--color-primary-rgb) / 0.08)",
+          50: "rgb(var(--color-primary-rgb) / 0.08)",
           100: "rgb(var(--color-primary-rgb) / 0.15)",
           400: "rgb(var(--color-primary-rgb) / <alpha-value>)",
           500: "rgb(var(--color-primary-rgb) / <alpha-value>)",
@@ -55,6 +55,6 @@ const config: Config = {
     },
   },
   plugins: [typography],
-};
+}
 
-export default config;
+export default config

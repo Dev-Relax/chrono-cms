@@ -1,82 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { Layout } from "../../components/common/Layout.js";
-import { useTheme } from "../../context/ThemeContext.js";
-import { pagesApi } from "../../lib/api.js";
-import { randomUUID } from "../../lib/uuid.js";
-import type { NavItem } from "../../types/index.js";
+import React, { useEffect, useState } from "react"
+import { Layout } from "../../components/common/Layout.js"
+import { useTheme } from "../../context/ThemeContext.js"
+import { pagesApi } from "../../lib/api.js"
+import { randomUUID } from "../../lib/uuid.js"
+import type { NavItem } from "../../types/index.js"
 
 const NavigationAdmin: React.FC = () => {
-  const { savedNav, setNav, saveNav, isSaving, isNavDirty } = useTheme();
-  const [items, setItems]     = useState<NavItem[]>(savedNav.items);
-  const [error, setError]     = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const { savedNav, setNav, saveNav, isSaving, isNavDirty } = useTheme()
+  const [items, setItems] = useState<NavItem[]>(savedNav.items)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  const [addLabel, setAddLabel] = useState("");
-  const [addUrl, setAddUrl]     = useState("");
+  const [addLabel, setAddLabel] = useState("")
+  const [addUrl, setAddUrl] = useState("")
 
   // Sync when savedNav changes from context load
-  useEffect(() => { setItems(savedNav.items); }, [savedNav]);
+  useEffect(() => {
+    setItems(savedNav.items)
+  }, [savedNav])
 
   // Merge published pages into the current item list.
   // Pages already in the list keep their position/settings.
   // New pages are appended (visible by default).
   useEffect(() => {
-    pagesApi.list().then(({ data }) => {
-      setItems((prev) => {
-        const existingSlugs = new Set(prev.filter((i) => i.type === "page").map((i) => i.slug));
-        const newItems = data
-          .filter((p) => !existingSlugs.has(p.slug))
-          .map((p): NavItem => ({
-            id:     p.id,
-            type:   "page",
-            label:  p.title,
-            slug:   p.slug,
-            hidden: false,
-          }));
-        return [...prev, ...newItems];
-      });
-    }).catch(() => {/* ignore */});
-  }, []);
+    pagesApi
+      .list()
+      .then(({ data }) => {
+        setItems((prev) => {
+          const existingSlugs = new Set(prev.filter((i) => i.type === "page").map((i) => i.slug))
+          const newItems = data
+            .filter((p) => !existingSlugs.has(p.slug))
+            .map(
+              (p): NavItem => ({
+                id: p.id,
+                type: "page",
+                label: p.title,
+                slug: p.slug,
+                hidden: false,
+              }),
+            )
+          return [...prev, ...newItems]
+        })
+      })
+      .catch(() => {
+        /* ignore */
+      })
+  }, [])
 
-  useEffect(() => { setNav({ items }); }, [items, setNav]);
+  useEffect(() => {
+    setNav({ items })
+  }, [items, setNav])
 
   const move = (index: number, dir: -1 | 1) => {
-    const next = [...items];
-    const target = index + dir;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target]!, next[index]!];
-    setItems(next);
-  };
+    const next = [...items]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target]!, next[index]!]
+    setItems(next)
+  }
 
   const toggle = (id: string) =>
-    setItems((prev) => prev.map((it) => it.id === id ? { ...it, hidden: !it.hidden } : it));
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, hidden: !it.hidden } : it)))
 
   const rename = (id: string, label: string) =>
-    setItems((prev) => prev.map((it) => it.id === id ? { ...it, label } : it));
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, label } : it)))
 
-  const remove = (id: string) =>
-    setItems((prev) => prev.filter((it) => it.id !== id));
+  const remove = (id: string) => setItems((prev) => prev.filter((it) => it.id !== id))
 
   const addCustom = () => {
-    if (!addLabel.trim() || !addUrl.trim()) return;
+    if (!addLabel.trim() || !addUrl.trim()) return
     setItems((prev) => [
       ...prev,
-      { id: randomUUID(), type: "custom", label: addLabel.trim(), url: addUrl.trim(), hidden: false },
-    ]);
-    setAddLabel("");
-    setAddUrl("");
-  };
+      {
+        id: randomUUID(),
+        type: "custom",
+        label: addLabel.trim(),
+        url: addUrl.trim(),
+        hidden: false,
+      },
+    ])
+    setAddLabel("")
+    setAddUrl("")
+  }
 
   const save = async () => {
-    setError(null);
+    setError(null)
     try {
-      await saveNav();
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2500);
+      await saveNav()
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 2500)
     } catch (err) {
-      setError((err as Error).message);
+      setError((err as Error).message)
     }
-  };
+  }
 
   return (
     <Layout admin>
@@ -145,7 +161,9 @@ const NavigationAdmin: React.FC = () => {
               placeholder="https://example.com"
               className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm
                          text-slate-200 placeholder-slate-600 focus:border-brand-500 focus:outline-none"
-              onKeyDown={(e) => { if (e.key === "Enter") addCustom(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addCustom()
+              }}
             />
           </div>
           <button
@@ -159,58 +177,74 @@ const NavigationAdmin: React.FC = () => {
         </div>
       </div>
     </Layout>
-  );
-};
+  )
+}
 
 type RowProps = {
-  item:     NavItem;
-  index:    number;
-  total:    number;
-  onMove:   (index: number, dir: -1 | 1) => void;
-  onToggle: (id: string) => void;
-  onRename: (id: string, label: string) => void;
-  onRemove?: (id: string) => void;
-};
+  item: NavItem
+  index: number
+  total: number
+  onMove: (index: number, dir: -1 | 1) => void
+  onToggle: (id: string) => void
+  onRename: (id: string, label: string) => void
+  onRemove?: (id: string) => void
+}
 
 const TYPE_BADGE: Record<string, string> = {
-  blog:   "bg-indigo-900/60 text-indigo-400",
-  page:   "bg-teal-900/60 text-teal-400",
+  blog: "bg-indigo-900/60 text-indigo-400",
+  page: "bg-teal-900/60 text-teal-400",
   custom: "bg-amber-900/60 text-amber-400",
-};
+}
 
-const NavItemRow: React.FC<RowProps> = ({ item, index, total, onMove, onToggle, onRename, onRemove }) => {
-  const [editing, setEditing] = useState(false);
-  const [label, setLabel]     = useState(item.label);
+const NavItemRow: React.FC<RowProps> = ({
+  item,
+  index,
+  total,
+  onMove,
+  onToggle,
+  onRename,
+  onRemove,
+}) => {
+  const [editing, setEditing] = useState(false)
+  const [label, setLabel] = useState(item.label)
 
   const commitRename = () => {
-    if (label.trim()) onRename(item.id, label.trim());
-    else setLabel(item.label);
-    setEditing(false);
-  };
+    if (label.trim()) onRename(item.id, label.trim())
+    else setLabel(item.label)
+    setEditing(false)
+  }
 
   return (
-    <div className={[
-      "flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
-      item.hidden
-        ? "border-slate-800 bg-slate-900/40 opacity-50"
-        : "border-slate-800 bg-slate-900",
-    ].join(" ")}>
+    <div
+      className={[
+        "flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
+        item.hidden
+          ? "border-slate-800 bg-slate-900/40 opacity-50"
+          : "border-slate-800 bg-slate-900",
+      ].join(" ")}
+    >
       <div className="flex flex-col gap-0.5 shrink-0">
         <button
           onClick={() => onMove(index, -1)}
           disabled={index === 0}
           className="rounded px-1 py-0.5 text-[10px] text-slate-600 hover:text-slate-300 disabled:opacity-20"
           title="Move up"
-        >▲</button>
+        >
+          ▲
+        </button>
         <button
           onClick={() => onMove(index, 1)}
           disabled={index === total - 1}
           className="rounded px-1 py-0.5 text-[10px] text-slate-600 hover:text-slate-300 disabled:opacity-20"
           title="Move down"
-        >▼</button>
+        >
+          ▼
+        </button>
       </div>
 
-      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[item.type] ?? ""}`}>
+      <span
+        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[item.type] ?? ""}`}
+      >
         {item.type}
       </span>
 
@@ -221,7 +255,13 @@ const NavItemRow: React.FC<RowProps> = ({ item, index, total, onMove, onToggle, 
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             onBlur={commitRename}
-            onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") { setLabel(item.label); setEditing(false); } }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename()
+              if (e.key === "Escape") {
+                setLabel(item.label)
+                setEditing(false)
+              }
+            }}
             className="w-full rounded border border-brand-500 bg-slate-800 px-2 py-0.5
                        text-sm text-slate-200 focus:outline-none"
           />
@@ -266,7 +306,7 @@ const NavItemRow: React.FC<RowProps> = ({ item, index, total, onMove, onToggle, 
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default NavigationAdmin;
+export default NavigationAdmin

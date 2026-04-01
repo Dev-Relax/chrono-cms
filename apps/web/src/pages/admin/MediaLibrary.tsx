@@ -1,117 +1,121 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { mediaApi, resolveMediaUrl } from "../../lib/api.js";
-import type { MediaFile } from "../../types/index.js";
-import { Layout } from "../../components/common/Layout.js";
-import { SkeletonImageGrid } from "../../components/common/Skeleton.js";
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { mediaApi, resolveMediaUrl } from "../../lib/api.js"
+import type { MediaFile } from "../../types/index.js"
+import { Layout } from "../../components/common/Layout.js"
+import { SkeletonImageGrid } from "../../components/common/Skeleton.js"
 
 const fmt = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const isImage = (f: MediaFile): boolean => {
-  const mime = f.mimeType ?? "";
-  if (mime.startsWith("image/")) return true;
+  const mime = f.mimeType ?? ""
+  if (mime.startsWith("image/")) return true
   // Fall back to extension check when mimeType is absent
-  return /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(f.filename);
-};
+  return /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(f.filename)
+}
 
 const fileIcon = (mime = ""): string => {
-  if (mime.includes("pdf"))                                    return "📄";
-  if (mime.includes("zip") || mime.includes("compress"))       return "🗜";
-  if (mime.includes("word") || mime.includes("document"))      return "📝";
-  if (mime.includes("sheet") || mime.includes("excel"))        return "📊";
-  if (mime.includes("presentation"))                           return "📑";
-  if (mime.includes("text/"))                                  return "📃";
-  return "📎";
-};
+  if (mime.includes("pdf")) return "📄"
+  if (mime.includes("zip") || mime.includes("compress")) return "🗜"
+  if (mime.includes("word") || mime.includes("document")) return "📝"
+  if (mime.includes("sheet") || mime.includes("excel")) return "📊"
+  if (mime.includes("presentation")) return "📑"
+  if (mime.includes("text/")) return "📃"
+  return "📎"
+}
 
 const extLabel = (f: MediaFile): string => {
-  const mime = f.mimeType ?? "";
+  const mime = f.mimeType ?? ""
   if (mime) {
-    const sub = mime.split("/")[1] ?? "";
-    const clean = sub.replace(/^vnd\.[^.]+\./, "").replace(/^x-/, "").split(".").pop() ?? sub;
-    if (clean.length <= 10) return clean.toUpperCase();
+    const sub = mime.split("/")[1] ?? ""
+    const clean =
+      sub
+        .replace(/^vnd\.[^.]+\./, "")
+        .replace(/^x-/, "")
+        .split(".")
+        .pop() ?? sub
+    if (clean.length <= 10) return clean.toUpperCase()
   }
-  const ext = f.filename.split(".").pop() ?? "";
-  return ext.toUpperCase();
-};
+  const ext = f.filename.split(".").pop() ?? ""
+  return ext.toUpperCase()
+}
 
-type Tab = "all" | "images" | "files";
+type Tab = "all" | "images" | "files"
 
 const MediaLibrary: React.FC = () => {
-  const [files, setFiles]         = useState<MediaFile[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError]         = useState<string | null>(null);
-  const [copied, setCopied]       = useState<string | null>(null);
-  const [dragging, setDragging]   = useState(false);
-  const [tab, setTab]             = useState<Tab>("all");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<MediaFile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const [tab, setTab] = useState<Tab>("all")
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const fetchFiles = useCallback(() => {
-    setLoading(true);
+    setLoading(true)
     mediaApi
       .list()
       .then(({ data }) => setFiles(data))
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { fetchFiles(); }, [fetchFiles]);
+  useEffect(() => {
+    fetchFiles()
+  }, [fetchFiles])
 
   const upload = async (file: File) => {
-    setUploading(true);
-    setError(null);
+    setUploading(true)
+    setError(null)
     try {
-      await mediaApi.upload(file);
-      fetchFiles();
+      await mediaApi.upload(file)
+      fetchFiles()
     } catch (err) {
-      setError((err as Error).message);
+      setError((err as Error).message)
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const handleFiles = (fileList: FileList | null) => {
-    if (!fileList) return;
-    for (const file of Array.from(fileList)) void upload(file);
-  };
+    if (!fileList) return
+    for (const file of Array.from(fileList)) void upload(file)
+  }
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    handleFiles(e.dataTransfer.files);
-  };
+    e.preventDefault()
+    setDragging(false)
+    handleFiles(e.dataTransfer.files)
+  }
 
   const handleDelete = async (filename: string) => {
-    if (!confirm(`Delete "${filename}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${filename}"? This cannot be undone.`)) return
     try {
-      await mediaApi.delete(filename);
-      setFiles((prev) => prev.filter((f) => f.filename !== filename));
+      await mediaApi.delete(filename)
+      setFiles((prev) => prev.filter((f) => f.filename !== filename))
     } catch (err) {
-      setError((err as Error).message);
+      setError((err as Error).message)
     }
-  };
+  }
 
   const copyUrl = (url: string) => {
     void navigator.clipboard.writeText(resolveMediaUrl(url)).then(() => {
-      setCopied(url);
-      setTimeout(() => setCopied(null), 2000);
-    });
-  };
+      setCopied(url)
+      setTimeout(() => setCopied(null), 2000)
+    })
+  }
 
-  const images = files.filter(isImage);
-  const docs   = files.filter((f) => !isImage(f));
+  const images = files.filter(isImage)
+  const docs = files.filter((f) => !isImage(f))
 
-  const tabFiles: MediaFile[] =
-    tab === "images" ? images :
-    tab === "files"  ? docs   :
-    files;
+  const tabFiles: MediaFile[] = tab === "images" ? images : tab === "files" ? docs : files
 
-  const tabImages = tabFiles.filter(isImage);
-  const tabDocs   = tabFiles.filter((f) => !isImage(f));
+  const tabImages = tabFiles.filter(isImage)
+  const tabDocs = tabFiles.filter((f) => !isImage(f))
 
   return (
     <Layout admin>
@@ -141,15 +145,16 @@ const MediaLibrary: React.FC = () => {
       )}
 
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragging(true)
+        }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={[
           "mb-6 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 transition-colors",
-          dragging
-            ? "border-brand-500 bg-brand-900/20"
-            : "border-slate-700 hover:border-slate-600",
+          dragging ? "border-brand-500 bg-brand-900/20" : "border-slate-700 hover:border-slate-600",
         ].join(" ")}
       >
         <span className="text-2xl text-slate-600">↑</span>
@@ -163,7 +168,7 @@ const MediaLibrary: React.FC = () => {
 
       <div className="mb-5 flex items-center gap-1 border-b border-slate-800 pb-0">
         {(["all", "images", "files"] as Tab[]).map((t) => {
-          const count = t === "all" ? files.length : t === "images" ? images.length : docs.length;
+          const count = t === "all" ? files.length : t === "images" ? images.length : docs.length
           return (
             <button
               key={t}
@@ -180,7 +185,7 @@ const MediaLibrary: React.FC = () => {
                 {count}
               </span>
             </button>
-          );
+          )
         })}
       </div>
 
@@ -232,19 +237,19 @@ const MediaLibrary: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
 type CardProps = {
-  file:     MediaFile;
-  copied:   string | null;
-  onCopy:   (url: string) => void;
-  onDelete: (name: string) => void;
-};
+  file: MediaFile
+  copied: string | null
+  onCopy: (url: string) => void
+  onDelete: (name: string) => void
+}
 
 const ImageCard: React.FC<CardProps> = ({ file, copied, onCopy, onDelete }) => {
-  const url      = resolveMediaUrl(file.url);
-  const isCopied = copied === file.url;
+  const url = resolveMediaUrl(file.url)
+  const isCopied = copied === file.url
 
   return (
     <div className="group relative rounded-xl border border-slate-800 overflow-hidden bg-slate-900">
@@ -254,8 +259,10 @@ const ImageCard: React.FC<CardProps> = ({ file, copied, onCopy, onDelete }) => {
         className="h-32 w-full object-cover"
         loading="lazy"
       />
-      <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-slate-950/90
-                      to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 gap-1">
+      <div
+        className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-slate-950/90
+                      to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 gap-1"
+      >
         <p className="text-xs text-slate-300 truncate" title={file.originalName ?? file.filename}>
           {file.originalName ?? file.filename}
         </p>
@@ -278,23 +285,32 @@ const ImageCard: React.FC<CardProps> = ({ file, copied, onCopy, onDelete }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const FileRow: React.FC<CardProps> = ({ file, copied, onCopy, onDelete }) => {
-  const isCopied = copied === file.url;
-  const mime     = file.mimeType ?? "";
-  const date     = file.uploadedAt
-    ? new Date(file.uploadedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-    : "";
+  const isCopied = copied === file.url
+  const mime = file.mimeType ?? ""
+  const date = file.uploadedAt
+    ? new Date(file.uploadedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : ""
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3
-                    hover:border-slate-700 transition-colors">
+    <div
+      className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3
+                    hover:border-slate-700 transition-colors"
+    >
       <span className="text-2xl shrink-0">{fileIcon(mime)}</span>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-200 truncate" title={file.originalName ?? file.filename}>
+        <p
+          className="text-sm font-medium text-slate-200 truncate"
+          title={file.originalName ?? file.filename}
+        >
           {file.originalName ?? file.filename}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
@@ -332,7 +348,7 @@ const FileRow: React.FC<CardProps> = ({ file, copied, onCopy, onDelete }) => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MediaLibrary;
+export default MediaLibrary

@@ -1,118 +1,158 @@
-import React, { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
-import Highlight from "@tiptap/extension-highlight";
-import Link from "@tiptap/extension-link";
-import FontFamily from "@tiptap/extension-font-family";
-import { Table } from "@tiptap/extension-table";
-import { TableRow } from "@tiptap/extension-table-row";
-import { TableCell } from "@tiptap/extension-table-cell";
-import { TableHeader } from "@tiptap/extension-table-header";
-import { ImageExtension } from "./extensions/ImageExtension.js";
-import Subscript from "@tiptap/extension-subscript";
-import Superscript from "@tiptap/extension-superscript";
-import { createLowlight } from "lowlight";
-import typescript from "highlight.js/lib/languages/typescript";
-import javascript from "highlight.js/lib/languages/javascript";
-import bash from "highlight.js/lib/languages/bash";
-import json from "highlight.js/lib/languages/json";
-import css from "highlight.js/lib/languages/css";
-import type { TipTapDoc } from "../../types/index.js";
-import { EditorToolbar } from "./EditorToolbar.js";
-import { FontSize } from "./extensions/FontSize.js";
-import { CalloutExtension } from "./extensions/CalloutExtension.js";
-import { VideoEmbedExtension } from "./extensions/VideoEmbedExtension.js";
-import { FileAttachmentExtension } from "./extensions/FileAttachmentExtension.js";
-import { SlashCommandExtension } from "./extensions/SlashCommandExtension.js";
+import React, { useEffect } from "react"
+import { useEditor, EditorContent } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import Placeholder from "@tiptap/extension-placeholder"
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
+import Underline from "@tiptap/extension-underline"
+import TextAlign from "@tiptap/extension-text-align"
+import { TextStyle } from "@tiptap/extension-text-style"
+import { Color } from "@tiptap/extension-color"
+import Highlight from "@tiptap/extension-highlight"
+import Link from "@tiptap/extension-link"
+import FontFamily from "@tiptap/extension-font-family"
+import { Table } from "@tiptap/extension-table"
+import { TableRow } from "@tiptap/extension-table-row"
+import { TableCell } from "@tiptap/extension-table-cell"
+import { TableHeader } from "@tiptap/extension-table-header"
+import { ImageExtension } from "./extensions/ImageExtension.js"
+import Subscript from "@tiptap/extension-subscript"
+import Superscript from "@tiptap/extension-superscript"
+import { createLowlight } from "lowlight"
+import typescript from "highlight.js/lib/languages/typescript"
+import javascript from "highlight.js/lib/languages/javascript"
+import bash from "highlight.js/lib/languages/bash"
+import json from "highlight.js/lib/languages/json"
+import css from "highlight.js/lib/languages/css"
+import type { TipTapDoc } from "../../types/index.js"
+import { EditorToolbar } from "./EditorToolbar.js"
+import { FontSize } from "./extensions/FontSize.js"
+import { CalloutExtension } from "./extensions/CalloutExtension.js"
+import { VideoEmbedExtension } from "./extensions/VideoEmbedExtension.js"
+import { FileAttachmentExtension } from "./extensions/FileAttachmentExtension.js"
+import { SlashCommandExtension } from "./extensions/SlashCommandExtension.js"
+import type { Editor, Extensions } from "@tiptap/core"
 
 // Register languages for syntax highlighting
-const lowlight = createLowlight();
-lowlight.register("typescript", typescript);
-lowlight.register("javascript", javascript);
-lowlight.register("bash", bash);
-lowlight.register("json", json);
-lowlight.register("css", css);
+const lowlight = createLowlight()
+lowlight.register("typescript", typescript)
+lowlight.register("javascript", javascript)
+lowlight.register("bash", bash)
+lowlight.register("json", json)
+lowlight.register("css", css)
+
+/** Returns the configured extension list. Pass `withSlashCommands: false`
+ *  when using extensions for schema-only purposes (e.g. generateJSON). */
+export const createEditorExtensions = ({
+  withSlashCommands = true,
+  placeholder = "Start writing… or type / for commands",
+}: {
+  withSlashCommands?: boolean
+  placeholder?: string
+} = {}): Extensions => [
+  StarterKit.configure({
+    codeBlock: false,
+    heading: { levels: [1, 2, 3, 4] },
+  }),
+  Underline,
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  TextStyle,
+  Color,
+  Highlight.configure({ multicolor: true }),
+  Link.configure({ openOnClick: false }),
+  ImageExtension,
+  FontFamily,
+  FontSize,
+  Subscript,
+  Superscript,
+  Placeholder.configure({ placeholder }),
+  CodeBlockLowlight.configure({ lowlight }),
+  Table.configure({ resizable: true }),
+  TableRow,
+  TableHeader,
+  TableCell,
+  CalloutExtension,
+  VideoEmbedExtension,
+  FileAttachmentExtension,
+  ...(withSlashCommands ? [SlashCommandExtension] : []),
+]
 
 type Props = {
   /** Current document JSON. Pass null/undefined on initial empty doc. */
-  content?: TipTapDoc | null;
+  content?: TipTapDoc | null
   /** Called every time the document changes with the new JSON. */
-  onChange?: (doc: TipTapDoc) => void;
+  onChange?: (doc: TipTapDoc) => void
+  /** Called once the editor instance is ready (and on unmount with null). */
+  onEditorReady?: (editor: Editor | null) => void
   /** Placeholder text shown in the empty editor */
-  placeholder?: string;
+  placeholder?: string
   /** When true the editor is read-only (no toolbar rendered) */
-  readOnly?: boolean;
+  readOnly?: boolean
+  /** When true the toolbar is hidden even in editable mode */
+  hideToolbar?: boolean
   /** Optional extra className on the wrapper div */
-  className?: string;
-};
+  className?: string
+}
 
 export const RichTextEditor: React.FC<Props> = ({
   content,
   onChange,
+  onEditorReady,
   placeholder = "Start writing… or type / for commands",
   readOnly = false,
+  hideToolbar = false,
   className = "",
 }) => {
   const editor = useEditor({
     editable: !readOnly,
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false,
-        heading: { levels: [1, 2, 3, 4] },
-      }),
-      Underline,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      Link.configure({ openOnClick: false }),
-      ImageExtension,
-      FontFamily,
-      FontSize,
-      Subscript,
-      Superscript,
-      Placeholder.configure({ placeholder }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      CalloutExtension,
-      VideoEmbedExtension,
-      FileAttachmentExtension,
-      ...(!readOnly ? [SlashCommandExtension] : []),
-    ],
+    extensions: createEditorExtensions({
+      withSlashCommands: !readOnly,
+      placeholder,
+    }),
     content: content ?? undefined,
-    onUpdate: ({ editor }) => {
-      onChange?.(editor.getJSON() as TipTapDoc);
+    editorProps: {
+      attributes: {
+        class: [
+          "prose prose-invert prose-slate max-w-none",
+          "prose-headings:font-semibold prose-headings:text-slate-50",
+          "prose-p:text-slate-300 prose-p:leading-7",
+          "prose-a:text-brand-400 prose-a:no-underline hover:prose-a:underline",
+          "prose-code:text-brand-400 prose-code:bg-slate-800",
+          "prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700",
+          "prose-blockquote:border-l-brand-500 prose-blockquote:text-slate-400",
+          "focus:outline-none px-4 py-4",
+        ].join(" "),
+      },
     },
-  });
+    onUpdate: ({ editor }) => {
+      onChange?.(editor.getJSON() as TipTapDoc)
+    },
+  })
+
+  // Expose editor instance to parent
+  useEffect(() => {
+    if (editor) onEditorReady?.(editor)
+    return () => onEditorReady?.(null)
+  }, [editor])
 
   // Sync external content changes (e.g. when loading a saved post)
   useEffect(() => {
-    if (!editor || !content) return;
-    const current  = JSON.stringify(editor.getJSON());
-    const incoming = JSON.stringify(content);
+    if (!editor || !content) return
+    const current = JSON.stringify(editor.getJSON())
+    const incoming = JSON.stringify(content)
     if (current !== incoming) {
-      editor.commands.setContent(content as Parameters<typeof editor.commands.setContent>[0]);
+      editor.commands.setContent(content as Parameters<typeof editor.commands.setContent>[0])
     }
-  }, [editor, content]);
+  }, [editor, content])
 
-  if (!editor) return null;
+  if (!editor) return null
 
   return (
     <div className={`flex flex-col ${className}`}>
-      {!readOnly && <EditorToolbar editor={editor} />}
+      {!readOnly && !hideToolbar && <EditorToolbar editor={editor} />}
 
       <EditorContent
         editor={editor}
-        className="flex-1 focus:outline-none px-1 pt-4
+        className="flex-1
                    [&_.tableWrapper]:overflow-x-auto
                    [&_table]:w-full [&_table]:border-collapse [&_table]:my-4
                    [&_td]:border [&_td]:border-slate-700 [&_td]:p-2 [&_td]:text-sm
@@ -120,5 +160,5 @@ export const RichTextEditor: React.FC<Props> = ({
                    [&_.selectedCell]:bg-brand-900/30"
       />
     </div>
-  );
-};
+  )
+}

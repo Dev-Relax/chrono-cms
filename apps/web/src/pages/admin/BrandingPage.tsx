@@ -1,42 +1,42 @@
-import React, { useEffect, useState } from "react";
-import { Layout } from "../../components/common/Layout.js";
-import { useTheme } from "../../context/ThemeContext.js";
-import type { BrandConfig } from "../../types/index.js";
+import React, { useEffect, useState } from "react"
+import { Layout } from "../../components/common/Layout.js"
+import { useTheme } from "../../context/ThemeContext.js"
+import type { BrandConfig } from "../../types/index.js"
 
 const Field: React.FC<{
-  label:        string;
-  hint?:        string;
-  children:     React.ReactNode;
+  label: string
+  hint?: string
+  children: React.ReactNode
 }> = ({ label, hint, children }) => (
   <div>
     <label className="block mb-1 text-sm font-medium text-slate-300">{label}</label>
     {hint && <p className="mb-1.5 text-xs text-slate-500">{hint}</p>}
     {children}
   </div>
-);
+)
 
 const inputCls =
   "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 " +
-  "placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+  "placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
 const BrandingPage: React.FC = () => {
-  const { savedBrand, draftBrand, setDraftBrand, saveBrand, isSaving, isBrandDirty } = useTheme();
+  const { savedBrand, draftBrand, setDraftBrand, saveBrand, isSaving, isBrandDirty } = useTheme()
 
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    setDraftBrand(savedBrand);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setDraftBrand(savedBrand)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const set = <K extends keyof BrandConfig>(key: K, value: BrandConfig[K]) =>
-    setDraftBrand({ ...draftBrand, [key]: value });
+    setDraftBrand({ ...draftBrand, [key]: value })
 
   const handleSave = async () => {
-    await saveBrand();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
+    await saveBrand()
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
 
   return (
     <Layout admin>
@@ -59,9 +59,10 @@ const BrandingPage: React.FC = () => {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-
         <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 space-y-5">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Identity</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+            Identity
+          </h2>
 
           <Field label="Site name" hint="Replaces 'Chronos CMS' in headers and the browser tab.">
             <input
@@ -74,7 +75,10 @@ const BrandingPage: React.FC = () => {
             />
           </Field>
 
-          <Field label="Tagline" hint="Short line shown below the blog heading. Leave empty to hide.">
+          <Field
+            label="Tagline"
+            hint="Short line shown below the blog heading. Leave empty to hide."
+          >
             <input
               type="text"
               className={inputCls}
@@ -102,14 +106,18 @@ const BrandingPage: React.FC = () => {
                 src={draftBrand.logoUrl}
                 alt="Logo preview"
                 className="mt-2 h-8 w-auto rounded object-contain bg-slate-800 p-1"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).style.display = "none"
+                }}
               />
             )}
           </Field>
         </section>
 
         <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 space-y-5">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">SEO &amp; Social</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+            SEO &amp; Social
+          </h2>
 
           <Field label="SEO title" hint="Sets the browser <title> for your site (max 100 chars).">
             <input
@@ -123,7 +131,10 @@ const BrandingPage: React.FC = () => {
             <p className="mt-1 text-xs text-slate-600">{draftBrand.seoTitle.length} / 100</p>
           </Field>
 
-          <Field label="SEO description" hint="Global meta description (max 300 chars). Individual posts can override this.">
+          <Field
+            label="SEO description"
+            hint="Global meta description (max 300 chars). Individual posts can override this."
+          >
             <textarea
               className={`${inputCls} resize-none`}
               rows={3}
@@ -152,7 +163,9 @@ const BrandingPage: React.FC = () => {
                 src={draftBrand.ogImage}
                 alt="OG image preview"
                 className="mt-2 w-full max-w-xs rounded object-cover aspect-video bg-slate-800"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).style.display = "none"
+                }}
               />
             )}
           </Field>
@@ -182,7 +195,7 @@ const BrandingPage: React.FC = () => {
         </p>
       </section>
     </Layout>
-  );
-};
+  )
+}
 
-export default BrandingPage;
+export default BrandingPage

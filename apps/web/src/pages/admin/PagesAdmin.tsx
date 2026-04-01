@@ -1,34 +1,37 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { pagesApi, ApiError } from "../../lib/api.js";
-import type { Page } from "../../types/index.js";
-import { Layout } from "../../components/common/Layout.js";
-import { SkeletonTableRows } from "../../components/common/Skeleton.js";
+import React, { useCallback, useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { pagesApi, ApiError } from "../../lib/api.js"
+import type { Page } from "../../types/index.js"
+import { Layout } from "../../components/common/Layout.js"
+import { SkeletonTableRows } from "../../components/common/Skeleton.js"
 
 const PagesAdmin: React.FC = () => {
-  const [pages, setPages]     = useState<Page[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [pages, setPages] = useState<Page[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchPages = useCallback(() => {
-    setLoading(true);
-    pagesApi.adminList()
+    setLoading(true)
+    pagesApi
+      .adminList()
       .then(({ data }) => setPages(data))
       .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { fetchPages(); }, [fetchPages]);
+  useEffect(() => {
+    fetchPages()
+  }, [fetchPages])
 
   const handleDelete = async (page: Page) => {
-    if (!confirm(`Delete page "${page.title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete page "${page.title}"? This cannot be undone.`)) return
     try {
-      await pagesApi.delete(page.id);
-      setPages((prev) => prev.filter((p) => p.id !== page.id));
+      await pagesApi.delete(page.id)
+      setPages((prev) => prev.filter((p) => p.id !== page.id))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Delete failed");
+      setError(err instanceof ApiError ? err.message : "Delete failed")
     }
-  };
+  }
 
   return (
     <Layout admin>
@@ -61,10 +64,18 @@ const PagesAdmin: React.FC = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900">
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Updated</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                  Title
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                  Updated
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -82,17 +93,23 @@ const PagesAdmin: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={[
-                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      page.status === "PUBLISHED"
-                        ? "bg-emerald-900/40 text-emerald-400"
-                        : "bg-amber-900/30 text-amber-500",
-                    ].join(" ")}>
+                    <span
+                      className={[
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        page.status === "PUBLISHED"
+                          ? "bg-emerald-900/40 text-emerald-400"
+                          : "bg-amber-900/30 text-amber-500",
+                      ].join(" ")}
+                    >
                       {page.status === "PUBLISHED" ? "● Published" : "○ Draft"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">
-                    {new Date(page.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {new Date(page.updatedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
@@ -128,7 +145,7 @@ const PagesAdmin: React.FC = () => {
         </div>
       )}
     </Layout>
-  );
-};
+  )
+}
 
-export default PagesAdmin;
+export default PagesAdmin
