@@ -19,6 +19,7 @@
     - [Authentication](#authentication-endpoints)
     - [Posts](#posts-endpoints)
     - [Pages](#pages-endpoints)
+    - [Projects](#projects-endpoints)
     - [Comments](#comments-endpoints)
     - [Media](#media-endpoints)
     - [Users](#users-endpoints-admin-only)
@@ -89,6 +90,18 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **SEO fields** — `metaTitle`, `metaDescription`, `ogImage` per locale per post/page
 - **Custom pages** — About, Contact, Privacy, etc. with their own per-locale slugs and content
 - **Revision history** — last 10 revisions per post+locale kept; one-click restore from the editor
+
+### Projects / Portfolio
+
+- **First-class Project content type** — a showcase/portfolio item, public at `/projects` and `/projects/:slug`
+- **Fully i18n** — same dynamic locale system as posts and pages; each translation has its own title, slug, summary, and long-form content
+- **Tech-stack chips** — locale-agnostic `String[]` of technologies rendered as tags
+- **Cover image** — chosen via the media picker or an external URL
+- **Blog link** — link a project to an internal post (resolved to its localized `/posts/:slug` at read time) **or** a free-form external URL; only one is stored (linking a post clears the URL)
+- **Manual ordering** — drag or move projects in the admin; persisted via `PUT /admin/projects/reorder`
+- **Featured projects** — pinned to the top of the grid
+- **External links** — optional `githubUrl` and `liveUrl` (validated as `http(s)` only)
+- **Webhooks + activity log** — emits `project.*` events like posts and pages
 
 ### Comments
 
@@ -181,7 +194,7 @@ chrono-cms/
 ├── packages/
 │   └── db/                        # @chronos/db
 │       ├── prisma/
-│       │   ├── schema.prisma      # User, Post, PostTranslation, Page, PageTranslation, …
+│       │   ├── schema.prisma      # User, Post, Page, Project (+ Translations), …
 │       │   └── migrations/
 │       └── src/
 │           ├── index.ts           # Prisma singleton + re-exported types
@@ -199,6 +212,7 @@ chrono-cms/
     │       │   ├── auth.ts        # /auth/login, /auth/me
     │       │   ├── posts.ts       # /posts + /admin/posts CRUD, revisions, search
     │       │   ├── pages.ts       # /pages + /admin/pages CRUD
+    │       │   ├── projects.ts    # /projects + /admin/projects CRUD, reorder, blog-link
     │       │   ├── comments.ts    # /posts/:id/comments (public) + /admin/comments
     │       │   ├── media.ts       # /admin/media upload/list/delete
     │       │   ├── users.ts       # /admin/users CRUD (ADMIN only)
@@ -242,8 +256,12 @@ chrono-cms/
                 ├── BlogFeedPage.tsx
                 ├── BlogPostPage.tsx       # language switcher
                 ├── CustomPageView.tsx     # language switcher
+                ├── ProjectsPage.tsx       # public portfolio grid
+                ├── ProjectDetailPage.tsx  # single project + language switcher
                 └── admin/
                     ├── AdminDashboard.tsx
+                    ├── ProjectsAdmin.tsx   # list + drag / up-down reorder
+                    ├── ProjectEditorPage.tsx # locale tabs, tech chips, blog link
                     ├── PostEditorPage.tsx  # dynamic locale tabs
                     ├── PageEditorPage.tsx  # dynamic locale tabs
                     ├── PagesAdmin.tsx
@@ -392,6 +410,7 @@ Source: [`packages/db/prisma/schema.prisma`](packages/db/prisma/schema.prisma)
 | `Role`          | `ADMIN` `EDITOR` `AUTHOR`              |
 | `PostStatus`    | `DRAFT` `PUBLISHED`                    |
 | `PageStatus`    | `DRAFT` `PUBLISHED`                    |
+| `ProjectStatus` | `DRAFT` `PUBLISHED`                    |
 | `CommentStatus` | `PENDING` `APPROVED` `SPAM` `REJECTED` |
 
 ### `Post` fields (global, locale-agnostic)
@@ -443,6 +462,39 @@ Source: [`packages/db/prisma/schema.prisma`](packages/db/prisma/schema.prisma)
 | `metaTitle`       | `String?`       |                                                             |
 | `metaDescription` | `String?`       |                                                             |
 | `ogImage`         | `String?`       |                                                             |
+
+### `Project` fields (global, locale-agnostic)
+
+| Column          | Type            | Notes                                                          |
+| --------------- | --------------- | -------------------------------------------------------------- |
+| `id`            | `String` (cuid) | PK                                                             |
+| `defaultLocale` | `String`        | BCP-47 tag of the canonical locale                             |
+| `status`        | `ProjectStatus` | `DRAFT` / `PUBLISHED`                                          |
+| `featured`      | `Boolean`       | Pinned to top of the grid                                      |
+| `order`         | `Int`           | Manual portfolio ordering (lower = earlier)                    |
+| `coverImage`    | `String?`       | `/uploads/…` path or absolute URL                              |
+| `techStack`     | `String[]`      | Tech-stack chips, locale-agnostic                              |
+| `githubUrl`     | `String?`       | Source repo link                                               |
+| `liveUrl`       | `String?`       | Live demo link                                                 |
+| `blogUrl`       | `String?`       | External article URL (used when `postId` is null)             |
+| `postId`        | `String?`       | FK → `Post.id` (`onDelete: SetNull`) — internal blog-post link |
+| `authorId`      | `String`        | FK → `User.id`                                                 |
+
+### `ProjectTranslation` fields (per-locale content)
+
+| Column            | Type            | Notes                                                       |
+| ----------------- | --------------- | ----------------------------------------------------------- |
+| `id`              | `String` (cuid) | PK                                                          |
+| `projectId`       | `String`        | FK → `Project.id` (cascade delete)                          |
+| `locale`          | `String`        | BCP-47 tag                                                  |
+| `title`           | `String`        |                                                             |
+| `slug`            | `String`        | Unique **per locale** — becomes `/projects/:slug`           |
+| `summary`         | `String?`       | Plain-text card blurb                                       |
+| `content`         | `Json`          | Optional TipTap ProseMirror long description (JSONB)        |
+| `metaTitle`       | `String?`       |                                                             |
+| `metaDescription` | `String?`       |                                                             |
+
+The blog link is mutually exclusive: storing a `postId` clears `blogUrl`. On read, an internal `postId` is resolved to the linked post's localized `/posts/:slug`; otherwise the raw `blogUrl` is returned.
 
 ---
 
@@ -809,6 +861,141 @@ Response: `204` · Errors: `403` `404`
 
 ---
 
+### Projects Endpoints
+
+Portfolio / showcase items. Same dynamic locale system as posts and pages — every translation gets its own slug. Admin routes require **EDITOR+**.
+
+Public responses are **flattened** to the requested locale and include the locale-agnostic fields (`coverImage`, `techStack`, `githubUrl`, `liveUrl`), a resolved `blogUrl`, and a `hreflang[]` array.
+
+#### `GET /projects`
+
+Public. All published projects, ordered featured-first, then by `order`, then newest.
+
+| Query param | Type                           | Default | Description                                              |
+| ----------- | ------------------------------ | ------- | -------------------------------------------------------- |
+| `lang`      | string                         | —       | Preferred locale (falls back to `defaultLocale`)         |
+| `strict`    | `1` / `true`                   | —       | Only return projects with an exact translation in `lang` |
+| `format`    | `json` \| `html` \| `markdown` | `json`  | Content format for the long description                  |
+
+Response: `{ "data": Project[] }`
+
+---
+
+#### `GET /projects/:slug`
+
+Public. Single published project by slug (matched across all locale translations).
+
+| Query param | Type                           | Description              |
+| ----------- | ------------------------------ | ------------------------ |
+| `lang`      | string                         | Override response locale |
+| `format`    | `json` \| `html` \| `markdown` | Content format           |
+
+```json
+// Response 200
+{
+  "data": {
+    "id": "clx…",
+    "defaultLocale": "en",
+    "locale": "en",
+    "title": "Chronos CMS",
+    "slug": "chronos-cms",
+    "summary": "A self-hostable hybrid CMS.",
+    "content": { "type": "doc", "content": [...] },
+    "coverImage": "/uploads/cover.webp",
+    "techStack": ["TypeScript", "Fastify", "React"],
+    "githubUrl": "https://github.com/your-org/chronos-cms",
+    "liveUrl": "https://demo.example.com",
+    "blogUrl": "/posts/building-chronos",
+    "postId": "cly…",
+    "featured": true,
+    "order": 0,
+    "status": "PUBLISHED",
+    "metaTitle": null, "metaDescription": null,
+    "author": { "id": "…", "name": "Admin", "email": "…" },
+    "hreflang": [{ "locale": "en", "slug": "chronos-cms" }]
+  }
+}
+```
+
+Errors: `404`
+
+---
+
+#### `GET /admin/projects` 🔒 _(EDITOR+)_
+
+List all projects (any status), ordered by `order`. Each item is flattened to its `defaultLocale` translation and includes a `translationCount` field.
+
+Response: `{ "data": Project[] }`
+
+---
+
+#### `GET /admin/projects/:id` 🔒 _(EDITOR+)_
+
+Single project with all translations (used by the editor).
+
+Response: `{ "data": { id, defaultLocale, status, translations: [...], … } }`
+
+---
+
+#### `POST /admin/projects` 🔒 _(EDITOR+)_
+
+```json
+{
+  "defaultLocale": "en",
+  "status": "DRAFT",
+  "featured": false,
+  "order": 0,
+  "coverImage": "/uploads/cover.webp",
+  "techStack": ["TypeScript", "Fastify", "React"],
+  "githubUrl": "https://github.com/your-org/chronos-cms",
+  "liveUrl": "https://demo.example.com",
+  "postId": "cly…",
+  "blogUrl": "",
+  "translations": {
+    "en": {
+      "title": "Chronos CMS",
+      "slug": "chronos-cms",
+      "summary": "A self-hostable hybrid CMS.",
+      "content": { "type": "doc", "content": [] }
+    }
+  }
+}
+```
+
+At least one translation is required. `githubUrl` / `liveUrl` must be `http(s)` URLs; `blogUrl` may be a relative path or an `http(s)` URL. Linking a `postId` clears `blogUrl`.
+
+Response: `201 { "data": Project }` · Errors: `400`
+
+---
+
+#### `PUT /admin/projects/:id` 🔒 _(EDITOR+)_
+
+Partial update. Translations are upserted. Setting `postId` to a non-empty value clears `blogUrl`; setting it to `null`/`""` disconnects the post and lets `blogUrl` take over.
+
+Response: `200 { "data": Project }` · Errors: `400` `403` `404`
+
+---
+
+#### `PUT /admin/projects/reorder` 🔒 _(EDITOR+)_
+
+Persist the manual ordering. Each id's array index becomes its `order` value (written in a single transaction).
+
+```json
+{ "ids": ["clx…", "cly…", "clz…"] }
+```
+
+Response: `{ "data": { "reordered": 3 } }` · Errors: `400`
+
+---
+
+#### `DELETE /admin/projects/:id` 🔒 _(EDITOR+)_
+
+Cascades to all translations.
+
+Response: `204` · Errors: `403` `404`
+
+---
+
 ### Comments Endpoints
 
 #### `GET /posts/:postId/comments`
@@ -1002,6 +1189,9 @@ Outbound HTTP callbacks fired on CMS events. All payloads include a full `transl
 | `page.updated`   | A published page is updated       |
 | `page.published` | A page transitions to `PUBLISHED` |
 | `page.deleted`   | A page is deleted                 |
+| `project.published` | A project is created as / transitions to `PUBLISHED` |
+| `project.updated`   | A published project is updated    |
+| `project.deleted`   | A project is deleted              |
 
 #### Payload shape
 
@@ -1156,17 +1346,19 @@ Public. XML sitemap covering all published post and page translations — one `<
 ```json
 {
   "data": {
-    "posts":  { "total": 24, "published": 18, "draft": 6 },
-    "pages":  { "total": 4,  "published": 3,  "draft": 1 },
+    "posts":    { "total": 24, "published": 18, "draft": 6 },
+    "pages":    { "total": 4,  "published": 3,  "draft": 1 },
+    "projects": { "total": 6,  "published": 5,  "draft": 1 },
     "media":  { "total": 38 },
     "users":  { "total": 3 },
     "recentPosts": [ { "id": "…", "title": "…", "slug": "…", "status": "PUBLISHED", … } ],
-    "recentPages": [ { "id": "…", "title": "…", "slug": "…", "status": "PUBLISHED", … } ]
+    "recentPages": [ { "id": "…", "title": "…", "slug": "…", "status": "PUBLISHED", … } ],
+    "recentProjects": [ { "id": "…", "title": "…", "slug": "…", "status": "PUBLISHED", … } ]
   }
 }
 ```
 
-Titles and slugs in `recentPosts` / `recentPages` are derived from the `defaultLocale` translation.
+Titles and slugs in `recentPosts` / `recentPages` / `recentProjects` are derived from the `defaultLocale` translation.
 
 ---
 
@@ -1319,6 +1511,8 @@ Images are rendered with `float`/`margin`/`width` inline styles matching the edi
 | ----------------------- | ------------------ | -------- | ---------------------------------------------------------- |
 | `/`                     | `BlogFeedPage`     | Public   | Paginated post feed with search, sidebar, layout modes     |
 | `/posts/:slug`          | `BlogPostPage`     | Public   | Single post with SEO meta tags + language switcher         |
+| `/projects`             | `ProjectsPage`     | Public   | Portfolio grid of published projects                       |
+| `/projects/:slug`       | `ProjectDetailPage`| Public   | Single project + language switcher                         |
 | `/:slug`                | `CustomPageView`   | Public   | Custom CMS page (About, Contact, etc.) + language switcher |
 | `/login`                | `LoginPage`        | Public   | Email + password login                                     |
 | `/admin`                | `AdminDashboard`   | 🔒       | Stats dashboard + recent activity                          |
@@ -1327,6 +1521,9 @@ Images are rendered with `float`/`margin`/`width` inline styles matching the edi
 | `/admin/pages`          | `PagesAdmin`       | 🔒       | Custom pages list with translation count badges            |
 | `/admin/pages/new`      | `PageEditorPage`   | 🔒       | Create page — dynamic locale tabs                          |
 | `/admin/pages/:id/edit` | `PageEditorPage`   | 🔒       | Edit page — dynamic locale tabs                            |
+| `/admin/projects`          | `ProjectsAdmin`    | 🔒       | Projects list with drag / up-down reordering            |
+| `/admin/projects/new`      | `ProjectEditorPage`| 🔒       | Create project — locale tabs, tech chips, blog link     |
+| `/admin/projects/:id/edit` | `ProjectEditorPage`| 🔒       | Edit project — locale tabs, tech chips, blog link       |
 | `/admin/design`         | `DesignCustomizer` | 🔒       | Theme settings (built-in blog only)                        |
 | `/admin/media`          | `MediaLibrary`     | 🔒       | Upload, copy URL, delete images                            |
 | `/admin/comments`       | `CommentsAdmin`    | 🔒       | Moderate comments, bulk actions                            |
