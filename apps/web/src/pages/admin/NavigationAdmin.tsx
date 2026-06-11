@@ -192,6 +192,7 @@ type RowProps = {
 
 const TYPE_BADGE: Record<string, string> = {
   blog: "bg-indigo-900/60 text-indigo-400",
+  projects: "bg-purple-900/60 text-purple-400",
   page: "bg-teal-900/60 text-teal-400",
   custom: "bg-amber-900/60 text-amber-400",
 }

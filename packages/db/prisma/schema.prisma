@@ -38,6 +38,11 @@ enum PageStatus {
   PUBLISHED
 }
 
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
 // ── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -52,6 +57,7 @@ model User {
 
   posts         Post[]
   pages         Page[]
+  projects      Project[]
   apiKeys       ApiKey[]
   postRevisions PostRevision[]
   activityLogs  ActivityLog[]
@@ -90,10 +96,11 @@ model Post {
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
-  translations PostTranslation[]
-  tags         PostTag[]
-  revisions    PostRevision[]
-  comments     Comment[]
+  translations   PostTranslation[]
+  tags           PostTag[]
+  revisions      PostRevision[]
+  comments       Comment[]
+  linkedProjects Project[]         @relation("PostProjects")
 
   @@index([status])
   @@index([status, publishedAt(sort: Desc)])
@@ -188,6 +195,74 @@ model PageTranslation {
   @@index([slug])
   @@index([locale])
   @@map("page_translations")
+}
+
+// ── Project ──────────────────────────────────────────────────────────────────
+// Portfolio / showcase items — locale-agnostic metadata lives here, all
+// translatable content (title, slug, summary, body) lives in ProjectTranslation.
+
+model Project {
+  id            String        @id @default(cuid())
+  /// BCP-47 locale tag of the canonical version (e.g. "en", "fr")
+  defaultLocale String        @default("en")
+  status        ProjectStatus @default(DRAFT)
+  featured      Boolean       @default(false)
+  /// Manual portfolio ordering (lower = earlier)
+  order         Int           @default(0)
+  /// /uploads/… path or absolute URL
+  coverImage    String?
+  /// Tech-stack chips, locale-agnostic (cf. Webhook.events)
+  techStack     String[]
+  githubUrl     String?
+  liveUrl       String?
+  /// External article URL (used when postId is null)
+  blogUrl       String?
+  /// Internal post link — resolved to /posts/:slug at read time
+  postId        String?
+  post          Post?         @relation("PostProjects", fields: [postId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  translations ProjectTranslation[]
+
+  @@index([status])
+  @@index([status, order])
+  @@index([featured])
+  @@index([authorId])
+  @@map("projects")
+}
+
+// ── ProjectTranslation ─────────────────────────────────────────────────────────
+// Per-locale translatable content for a Project.
+
+model ProjectTranslation {
+  id        String @id @default(cuid())
+  projectId String
+  /// BCP-47 locale tag (e.g. "en", "fr", "es")
+  locale    String
+
+  title   String
+  slug    String
+  /// Plain-text card blurb (optional)
+  summary String?
+  /// Optional TipTap ProseMirror long description stored as raw JSON
+  content Json    @default("{}")
+
+  metaTitle       String?
+  metaDescription String?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  /// One translation per locale per project
+  @@unique([projectId, locale])
+  /// Slugs must be unique within a locale
+  @@unique([locale, slug])
+  @@index([slug])
+  @@index([locale])
+  @@map("project_translations")
 }
 
 // ── SiteSettings (singleton) ─────────────────────────────────────────────────

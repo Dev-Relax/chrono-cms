@@ -3,6 +3,7 @@
     "overview": "Vue d'ensemble",
     "posts": "Articles",
     "pages": "Pages",
+    "projects": "Projets",
     "comments": "Commentaires",
     "media": "Médias",
     "design": "Design",
@@ -86,6 +87,17 @@
     "delete": "Supprimer",
     "deleteConfirm": "Supprimer cet article ? Cette action est irréversible.",
     "search": "Rechercher des articles…"
+  },
+  "projects": {
+    "title": "Projets",
+    "subtitle": "Une sélection de mes réalisations.",
+    "empty": "Aucun projet publié pour le moment.",
+    "featured": "En vedette",
+    "liveDemo": "Démo en ligne",
+    "readMore": "Lire la suite",
+    "details": "Détails",
+    "notFound": "Projet introuvable",
+    "backToProjects": "Retour aux projets"
   },
   "comments": {
     "pending": "En attente",

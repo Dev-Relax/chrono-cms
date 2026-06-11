@@ -4,6 +4,8 @@ import type {
   MediaFile,
   Page,
   PageTranslation,
+  Project,
+  ProjectTranslation,
   Post,
   PostTranslation,
   Comment,
@@ -223,6 +225,84 @@ export const pagesApi = {
   delete: (id: string) => request<void>(`/admin/pages/${id}`, { method: "DELETE" }),
 }
 
+/** Per-locale translatable fields used inside ProjectPayload.translations. */
+export type ProjectTranslationPayload = {
+  title: string
+  slug?: string
+  summary?: string
+  content: Record<string, unknown>
+  metaTitle?: string
+  metaDescription?: string
+}
+
+export type ProjectPayload = {
+  defaultLocale?: string
+  /** Multi-locale payload: keyed by locale ("en", "fr", …) */
+  translations?: Record<string, ProjectTranslationPayload>
+  status?: "DRAFT" | "PUBLISHED"
+  featured?: boolean
+  order?: number
+  coverImage?: string
+  techStack?: string[]
+  githubUrl?: string
+  liveUrl?: string
+  blogUrl?: string
+  /** Internal post link. Send `null` to clear. Wins over `blogUrl` when set. */
+  postId?: string | null
+}
+
+/** Shape returned by GET /admin/projects/:id */
+export type AdminProject = Project & {
+  translations: ProjectTranslation[]
+}
+
+export type ProjectsQueryParams = {
+  lang?: string
+  /** When true, only return projects that have an exact translation for `lang`. */
+  strict?: boolean
+}
+
+export const projectsApi = {
+  /** Public: list all published projects. Pass `lang` to localise, `strict` to filter. */
+  list: (params: ProjectsQueryParams = {}) => {
+    const qs = Object.entries({
+      ...(params.lang ? { lang: params.lang } : {}),
+      ...(params.strict ? { strict: "1" } : {}),
+    })
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join("&")
+    return request<{ data: Project[] }>(`/projects${qs ? `?${qs}` : ""}`)
+  },
+
+  getBySlug: (slug: string, lang?: string) =>
+    request<{ data: Project }>(`/projects/${slug}${lang ? `?lang=${lang}` : ""}`),
+
+  adminList: () => request<{ data: Project[] }>("/admin/projects"),
+
+  adminGet: (id: string) => request<{ data: AdminProject }>(`/admin/projects/${id}`),
+
+  create: (payload: ProjectPayload) =>
+    request<{ data: AdminProject }>("/admin/projects", {
+      method: "POST",
+      body: payload,
+    }),
+
+  update: (id: string, payload: Partial<ProjectPayload>) =>
+    request<{ data: AdminProject }>(`/admin/projects/${id}`, {
+      method: "PUT",
+      body: payload,
+    }),
+
+  delete: (id: string) => request<void>(`/admin/projects/${id}`, { method: "DELETE" }),
+
+  /** Persist a new manual ordering. `ids` are written as `order` = array index. */
+  reorder: (ids: string[]) =>
+    request<{ data: { reordered: number } }>("/admin/projects/reorder", {
+      method: "PUT",
+      body: { ids },
+    }),
+}
+
 export type UserPayload = {
   email: string
   password: string
@@ -366,6 +446,7 @@ export const activityApi = {
 export interface CmsStats {
   posts: { total: number; published: number; draft: number }
   pages: { total: number; published: number; draft: number }
+  projects: { total: number; published: number; draft: number }
   media: { total: number }
   users: { total: number | null }
   recentPosts: {
@@ -383,6 +464,14 @@ export interface CmsStats {
     title: string
     slug: string
     status: string
+    updatedAt: string
+  }[]
+  recentProjects: {
+    id: string
+    title: string
+    slug: string
+    status: string
+    featured: boolean
     updatedAt: string
   }[]
 }

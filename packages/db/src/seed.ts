@@ -5,7 +5,7 @@
 //   headings H2–H3 · inline marks · code blocks · callout blocks (all 4 types)
 //   tables · video embed · file attachment · blockquote · lists · HR
 
-import { PrismaClient, PostStatus } from "@prisma/client"
+import { PrismaClient, PostStatus, PageStatus, ProjectStatus, Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
@@ -1807,6 +1807,114 @@ const aboutPageContentFr = {
   ],
 }
 
+const projectContentEn = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", marks: [{ type: "bold" }], text: "Chronos CMS" },
+        {
+          type: "text",
+          text: " is a self-hostable, open-source hybrid CMS. It pairs a polished admin UI with a clean headless REST API, so the same content powers both the built-in blog and any external frontend.",
+        },
+      ],
+    },
+    {
+      type: "heading",
+      attrs: { level: 2 },
+      content: [{ type: "text", text: "Highlights" }],
+    },
+    {
+      type: "bulletList",
+      content: [
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Multi-locale posts, pages, and projects" }],
+            },
+          ],
+        },
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Structured TipTap JSON content — never raw HTML" }],
+            },
+          ],
+        },
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Webhooks, API keys, and activity logging" }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
+const projectContentFr = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", marks: [{ type: "bold" }], text: "Chronos CMS" },
+        {
+          type: "text",
+          text: " est un CMS hybride open-source auto-hébergeable. Il associe une interface d'administration soignée à une API REST headless propre, afin que le même contenu alimente à la fois le blog intégré et n'importe quel frontend externe.",
+        },
+      ],
+    },
+    {
+      type: "heading",
+      attrs: { level: 2 },
+      content: [{ type: "text", text: "Points forts" }],
+    },
+    {
+      type: "bulletList",
+      content: [
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Articles, pages et projets multilingues" }],
+            },
+          ],
+        },
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "Contenu structuré en JSON TipTap — jamais de HTML brut" },
+              ],
+            },
+          ],
+        },
+        {
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Webhooks, clés API et journal d'activité" }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
 const main = async (): Promise<void> => {
   console.log("🌱  Seeding database…")
 
@@ -1818,7 +1926,7 @@ const main = async (): Promise<void> => {
       email: ADMIN_EMAIL,
       password: hashedPassword,
       name: "Admin",
-      role: "ADMIN",
+      role: Role.ADMIN,
     },
   })
   console.log(`✓  Admin: ${admin.email}`)
@@ -1844,10 +1952,7 @@ const main = async (): Promise<void> => {
   )
   console.log(`✓  Tags: ${tags.map((t) => t.name).join(", ")}`)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = prisma as any
-
-  const existingPost = await db.post.findFirst({
+  const existingPost = await prisma.post.findFirst({
     where: {
       translations: { some: { locale: "en", slug: "editor-feature-showcase" } },
     },
@@ -1855,7 +1960,7 @@ const main = async (): Promise<void> => {
   })
 
   if (existingPost) {
-    await db.postTranslation.upsert({
+    await prisma.postTranslation.upsert({
       where: { postId_locale: { postId: existingPost.id, locale: "en" } },
       update: {
         title: "Everything Chronos CMS Can Do — A Complete Showcase",
@@ -1879,7 +1984,7 @@ const main = async (): Promise<void> => {
           "Every editor feature in Chronos CMS: callout blocks, tables, video embeds, file attachments, syntax-highlighted code, and full i18n support.",
       },
     })
-    await db.postTranslation.upsert({
+    await prisma.postTranslation.upsert({
       where: { postId_locale: { postId: existingPost.id, locale: "fr" } },
       update: {
         title: "Tout ce que Chronos CMS Peut Faire — Une Vitrine Complète",
@@ -1905,14 +2010,14 @@ const main = async (): Promise<void> => {
     })
     console.log(`✓  Post (updated): showcase (EN + FR)`)
   } else {
-    const post = await db.post.create({
+    const post = await prisma.post.create({
       data: {
         defaultLocale: "en",
         status: PostStatus.PUBLISHED,
         featured: true,
         publishedAt: new Date(),
         authorId: admin.id,
-        tags: { create: tags.map((t: { id: string }) => ({ tagId: t.id })) },
+        tags: { create: tags.map((t) => ({ tagId: t.id })) },
         translations: {
           create: [
             {
@@ -1945,13 +2050,13 @@ const main = async (): Promise<void> => {
     console.log(`✓  Post: showcase (featured, EN + FR) — id: ${post.id}`)
   }
 
-  const existingPage = await db.page.findFirst({
+  const existingPage = await prisma.page.findFirst({
     where: { translations: { some: { locale: "en", slug: "about" } } },
     select: { id: true },
   })
 
   if (existingPage) {
-    await db.pageTranslation.upsert({
+    await prisma.pageTranslation.upsert({
       where: { pageId_locale: { pageId: existingPage.id, locale: "en" } },
       update: {
         title: "About Chronos CMS",
@@ -1971,7 +2076,7 @@ const main = async (): Promise<void> => {
           "What Chronos CMS is, why it was built, and how to get started in under five minutes.",
       },
     })
-    await db.pageTranslation.upsert({
+    await prisma.pageTranslation.upsert({
       where: { pageId_locale: { pageId: existingPage.id, locale: "fr" } },
       update: {
         title: "À propos de Chronos CMS",
@@ -1993,10 +2098,10 @@ const main = async (): Promise<void> => {
     })
     console.log(`✓  Page (updated): About (EN + FR)`)
   } else {
-    const page = await db.page.create({
+    const page = await prisma.page.create({
       data: {
         defaultLocale: "en",
-        status: "PUBLISHED",
+        status: PageStatus.PUBLISHED,
         authorId: admin.id,
         translations: {
           create: [
@@ -2025,6 +2130,116 @@ const main = async (): Promise<void> => {
     })
     console.log(`✓  Page: About (EN + FR) — id: ${page.id}`)
   }
+
+  // Link the first sample project to the showcase post, if present.
+  const showcasePost = await prisma.post.findFirst({
+    where: { translations: { some: { locale: "en", slug: "editor-feature-showcase" } } },
+    select: { id: true },
+  })
+
+  const existingProject = await prisma.project.findFirst({
+    where: { translations: { some: { locale: "en", slug: "chronos-cms" } } },
+    select: { id: true },
+  })
+
+  if (!existingProject) {
+    const project = await prisma.project.create({
+      data: {
+        defaultLocale: "en",
+        status: ProjectStatus.PUBLISHED,
+        featured: true,
+        order: 0,
+        coverImage: null,
+        techStack: ["TypeScript", "React", "Fastify", "Prisma", "PostgreSQL", "TipTap"],
+        githubUrl: "https://github.com/your-org/chronos-cms",
+        liveUrl: "https://chronos.dev",
+        ...(showcasePost ? { postId: showcasePost.id } : {}),
+        authorId: admin.id,
+        translations: {
+          create: [
+            {
+              locale: "en",
+              title: "Chronos CMS",
+              slug: "chronos-cms",
+              summary:
+                "A self-hostable, open-source hybrid CMS with a rich editor, full i18n, and a clean headless REST API.",
+              content: projectContentEn,
+              metaTitle: "Chronos CMS — Open-source headless CMS",
+              metaDescription:
+                "An open-source, self-hostable hybrid CMS built with Fastify, React, TipTap, and PostgreSQL.",
+            },
+            {
+              locale: "fr",
+              title: "Chronos CMS",
+              slug: "chronos-cms-fr",
+              summary:
+                "Un CMS hybride open-source auto-hébergeable avec un éditeur riche, l'i18n complet et une API REST headless propre.",
+              content: projectContentFr,
+              metaTitle: "Chronos CMS — CMS headless open-source",
+              metaDescription:
+                "Un CMS hybride open-source et auto-hébergeable construit avec Fastify, React, TipTap et PostgreSQL.",
+            },
+          ],
+        },
+      },
+      select: { id: true },
+    })
+    console.log(`✓  Project: Chronos CMS (featured, EN + FR) — id: ${project.id}`)
+  } else {
+    console.log(`✓  Project (exists): Chronos CMS`)
+  }
+
+  const existingProject2 = await prisma.project.findFirst({
+    where: { translations: { some: { locale: "en", slug: "personal-portfolio" } } },
+    select: { id: true },
+  })
+
+  if (!existingProject2) {
+    const project2 = await prisma.project.create({
+      data: {
+        defaultLocale: "en",
+        status: ProjectStatus.PUBLISHED,
+        featured: false,
+        order: 1,
+        techStack: ["Vite", "React", "Tailwind CSS"],
+        blogUrl: "https://example.com/blog/building-my-portfolio",
+        authorId: admin.id,
+        translations: {
+          create: [
+            {
+              locale: "en",
+              title: "Personal Portfolio",
+              slug: "personal-portfolio",
+              summary: "A fast, responsive developer portfolio built with Vite and Tailwind CSS.",
+              content: {},
+              metaTitle: "Personal Portfolio",
+              metaDescription: "A developer portfolio built with Vite and Tailwind CSS.",
+            },
+            {
+              locale: "fr",
+              title: "Portfolio Personnel",
+              slug: "portfolio-personnel",
+              summary: "Un portfolio de développeur rapide et responsive, construit avec Vite et Tailwind CSS.",
+              content: {},
+              metaTitle: "Portfolio Personnel",
+              metaDescription: "Un portfolio de développeur construit avec Vite et Tailwind CSS.",
+            },
+          ],
+        },
+      },
+      select: { id: true },
+    })
+    console.log(`✓  Project: Personal Portfolio (EN + FR) — id: ${project2.id}`)
+  } else {
+    console.log(`✓  Project (exists): Personal Portfolio`)
+  }
+
+  await prisma.siteSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton", themeConfig: {}, brandConfig: {}, navConfig: {} },
+  })
+  console.log(`✓  SiteSettings: singleton`)
 
   console.log("\n✅  Seed complete.")
   console.log(`   Showcase post (EN) → http://localhost:5173/posts/editor-feature-showcase`)

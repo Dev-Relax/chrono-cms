@@ -11,6 +11,10 @@ export type ActivityAction =
   | "page.updated"
   | "page.published"
   | "page.deleted"
+  | "project.created"
+  | "project.updated"
+  | "project.published"
+  | "project.deleted"
   | "user.created"
   | "user.updated"
   | "user.deleted"
@@ -22,7 +26,7 @@ export type ActivityAction =
   | "media.uploaded"
   | "media.deleted"
 
-export type EntityType = "post" | "page" | "user" | "webhook" | "apikey" | "media"
+export type EntityType = "post" | "page" | "project" | "user" | "webhook" | "apikey" | "media"
 
 export interface LogParams {
   userId: string

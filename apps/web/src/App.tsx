@@ -9,6 +9,8 @@ import { AdminShell } from "./components/common/AdminShell.js"
 const LoginPage = React.lazy(() => import("./pages/LoginPage.js"))
 const BlogFeedPage = React.lazy(() => import("./pages/BlogFeedPage.js"))
 const BlogPostPage = React.lazy(() => import("./pages/BlogPostPage.js"))
+const ProjectsPage = React.lazy(() => import("./pages/ProjectsPage.js"))
+const ProjectDetailPage = React.lazy(() => import("./pages/ProjectDetailPage.js"))
 const CustomPageView = React.lazy(() => import("./pages/CustomPageView.js"))
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard.js"))
 const PostEditorPage = React.lazy(() => import("./pages/admin/PostEditorPage.js"))
@@ -17,6 +19,8 @@ const MediaLibrary = React.lazy(() => import("./pages/admin/MediaLibrary.js"))
 const UserManagement = React.lazy(() => import("./pages/admin/UserManagement.js"))
 const PagesAdmin = React.lazy(() => import("./pages/admin/PagesAdmin.js"))
 const PageEditorPage = React.lazy(() => import("./pages/admin/PageEditorPage.js"))
+const ProjectsAdmin = React.lazy(() => import("./pages/admin/ProjectsAdmin.js"))
+const ProjectEditorPage = React.lazy(() => import("./pages/admin/ProjectEditorPage.js"))
 const WebhooksAdmin = React.lazy(() => import("./pages/admin/WebhooksAdmin.js"))
 const ApiKeysAdmin = React.lazy(() => import("./pages/admin/ApiKeysAdmin.js"))
 const PostsAdmin = React.lazy(() => import("./pages/admin/PostsAdmin.js"))
@@ -71,6 +75,9 @@ const App: React.FC = () => (
             <Route path="/admin/pages" element={<PagesAdmin />} />
             <Route path="/admin/pages/new" element={<PageEditorPage />} />
             <Route path="/admin/pages/:id/edit" element={<PageEditorPage />} />
+            <Route path="/admin/projects" element={<ProjectsAdmin />} />
+            <Route path="/admin/projects/new" element={<ProjectEditorPage />} />
+            <Route path="/admin/projects/:id/edit" element={<ProjectEditorPage />} />
             <Route path="/admin/posts" element={<PostsAdmin />} />
             <Route path="/admin/webhooks" element={<WebhooksAdmin />} />
             <Route path="/admin/apikeys" element={<ApiKeysAdmin />} />
@@ -79,6 +86,23 @@ const App: React.FC = () => (
             <Route path="/admin/navigation" element={<NavigationAdmin />} />
           </Route>
         </Route>
+
+        <Route
+          path="/projects"
+          element={
+            <React.Suspense fallback={<PublicSpinner />}>
+              <ProjectsPage />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/projects/:slug"
+          element={
+            <React.Suspense fallback={<PublicSpinner />}>
+              <ProjectDetailPage />
+            </React.Suspense>
+          }
+        />
 
         {/* Custom CMS pages — must be before the catch-all */}
         <Route

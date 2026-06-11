@@ -22,6 +22,10 @@ const ALL_EVENTS = [
   "page.updated",
   "page.published",
   "page.deleted",
+  "project.created",
+  "project.updated",
+  "project.published",
+  "project.deleted",
 ]
 
 const inputCls =

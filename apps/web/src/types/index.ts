@@ -129,6 +129,53 @@ export type Page = {
   translations?: PageTranslation[]
 }
 
+export type ProjectStatus = "DRAFT" | "PUBLISHED"
+
+export type ProjectTranslation = {
+  id: string
+  projectId: string
+  locale: string
+  title: string
+  slug: string
+  summary: string | null
+  content: TipTapDoc
+  metaTitle: string | null
+  metaDescription: string | null
+}
+
+/** Flattened public/admin response — translation fields promoted to top level. */
+export type Project = {
+  id: string
+  defaultLocale: string
+  /** Which locale was actually returned (may differ from requested if fallback applied). */
+  locale: string
+  title: string
+  slug: string
+  summary: string | null
+  content: TipTapDoc
+  metaTitle: string | null
+  metaDescription: string | null
+  coverImage: string | null
+  techStack: string[]
+  githubUrl: string | null
+  liveUrl: string | null
+  /** Resolved blog link — /posts/:slug for an internal post, or the stored URL. */
+  blogUrl: string | null
+  postId: string | null
+  featured: boolean
+  order: number
+  status: ProjectStatus
+  createdAt: string
+  updatedAt: string
+  author: { id: string; name: string | null; email: string }
+  /** SEO: all available locale↔slug pairs for hreflang generation. */
+  hreflang?: Array<{ locale: string; slug: string }>
+  /** How many translations exist (lightweight list response). */
+  translationCount?: number
+  /** Present in admin/editor responses — full list of translations. */
+  translations?: ProjectTranslation[]
+}
+
 export type AdminUser = {
   id: string
   email: string
@@ -254,7 +301,7 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   ogImage: "",
 }
 
-export type NavItemType = "blog" | "page" | "custom"
+export type NavItemType = "blog" | "projects" | "page" | "custom"
 
 export type NavItem = {
   id: string
@@ -272,7 +319,10 @@ export type NavConfig = {
 }
 
 export const DEFAULT_NAV_CONFIG: NavConfig = {
-  items: [{ id: "blog", type: "blog", label: "Blog", hidden: false }],
+  items: [
+    { id: "blog", type: "blog", label: "Blog", hidden: false },
+    { id: "projects", type: "projects", label: "Projects", hidden: false },
+  ],
 }
 
 export type SiteSettings = {

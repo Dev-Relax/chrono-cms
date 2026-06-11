@@ -18,5 +18,15 @@ if (process.env["NODE_ENV"] !== "production") {
 }
 
 // Re-export generated types for convenience
-export type { User, Post, Tag, PostTag, SiteSettings, Role, PostStatus } from "@prisma/client"
+export type {
+  User,
+  Post,
+  Tag,
+  PostTag,
+  SiteSettings,
+  Role,
+  PostStatus,
+  Project,
+  ProjectStatus,
+} from "@prisma/client"
 export { Prisma } from "@prisma/client"

@@ -40,6 +40,10 @@ const ActionIcon: Record<string, string> = {
   "page.updated": "✎",
   "page.published": "◉",
   "page.deleted": "✕",
+  "project.created": "✚",
+  "project.updated": "✎",
+  "project.published": "◉",
+  "project.deleted": "✕",
   "user.created": "👤",
   "user.deleted": "👤",
   "apikey.created": "🔑",
@@ -112,6 +116,7 @@ const AdminDashboard: React.FC = () => {
 
   const sp = stats?.posts
   const sg = stats?.pages
+  const spr = stats?.projects
 
   return (
     <Layout admin>
@@ -154,6 +159,13 @@ const AdminDashboard: React.FC = () => {
               sub={sg ? `${sg.published} published · ${sg.draft} draft` : undefined}
               href="/admin/pages"
               accent="text-violet-400"
+            />
+            <StatCard
+              label="Projects"
+              value={spr?.total ?? null}
+              sub={spr ? `${spr.published} published · ${spr.draft} draft` : undefined}
+              href="/admin/projects"
+              accent="text-purple-400"
             />
             <StatCard
               label="Media files"

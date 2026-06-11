@@ -38,3 +38,5 @@ apps/web/dist/
 
 # TypeScript
 *.tsbuildinfo
+
+docs

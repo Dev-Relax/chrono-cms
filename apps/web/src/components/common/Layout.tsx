@@ -34,6 +34,7 @@ const NAV_SECTIONS: { titleKey: string; items: NavItem[] }[] = [
       { to: "/admin", label: "nav.overview", icon: "▤", end: true },
       { to: "/admin/posts", label: "nav.posts", icon: "✍" },
       { to: "/admin/pages", label: "nav.pages", icon: "☰" },
+      { to: "/admin/projects", label: "nav.projects", icon: "🗂" },
       { to: "/admin/comments", label: "nav.comments", icon: "💬" },
     ],
   },
@@ -285,6 +286,9 @@ export const Layout: React.FC<Props> = ({ children, admin = false }) => {
         .map((item) => {
           if (item.type === "blog") {
             return navLink("/", item.label, item.id)
+          }
+          if (item.type === "projects") {
+            return navLink("/projects", item.label, item.id)
           }
           if (item.type === "page" && item.slug) {
             return navLink(`/${item.slug}`, item.label, item.id)

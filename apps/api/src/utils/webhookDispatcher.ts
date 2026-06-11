@@ -10,6 +10,10 @@ export type WebhookEvent =
   | "page.updated"
   | "page.published"
   | "page.deleted"
+  | "project.created"
+  | "project.updated"
+  | "project.published"
+  | "project.deleted"
 
 interface WebhookPayload {
   event: WebhookEvent

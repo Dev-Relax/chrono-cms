@@ -19,14 +19,19 @@ export const statsRoutes = async (fastify: FastifyInstance): Promise<void> => {
       publishedPosts,
       totalPages,
       publishedPages,
+      totalProjects,
+      publishedProjects,
       totalUsers,
       recentPostsRaw,
       recentPagesRaw,
+      recentProjectsRaw,
     ] = await Promise.all([
       prisma.post.count({ where: postWhere }),
       prisma.post.count({ where: { ...postWhere, status: "PUBLISHED" } }),
       prisma.page.count(),
       prisma.page.count({ where: { status: "PUBLISHED" } }),
+      prisma.project.count(),
+      prisma.project.count({ where: { status: "PUBLISHED" } }),
       payload.role === "ADMIN" ? prisma.user.count() : Promise.resolve(null),
       db.post.findMany({
         where: postWhere,
@@ -50,6 +55,18 @@ export const statsRoutes = async (fastify: FastifyInstance): Promise<void> => {
           id: true,
           defaultLocale: true,
           status: true,
+          updatedAt: true,
+          translations: { select: { locale: true, title: true, slug: true } },
+        },
+      }),
+      db.project.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          defaultLocale: true,
+          status: true,
+          featured: true,
           updatedAt: true,
           translations: { select: { locale: true, title: true, slug: true } },
         },
@@ -89,6 +106,22 @@ export const statsRoutes = async (fastify: FastifyInstance): Promise<void> => {
       }
     })
 
+    // Derive title/slug from the defaultLocale translation for each project
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recentProjects = (recentProjectsRaw as any[]).map((p) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const def =
+        p.translations?.find((t: any) => t.locale === p.defaultLocale) ?? p.translations?.[0]
+      return {
+        id: p.id,
+        title: def?.title ?? "",
+        slug: def?.slug ?? "",
+        status: p.status,
+        featured: p.featured,
+        updatedAt: p.updatedAt,
+      }
+    })
+
     let totalMedia = 0
     try {
       totalMedia = readdirSync(UPLOADS_DIR).length
@@ -108,10 +141,16 @@ export const statsRoutes = async (fastify: FastifyInstance): Promise<void> => {
           published: publishedPages,
           draft: totalPages - publishedPages,
         },
+        projects: {
+          total: totalProjects,
+          published: publishedProjects,
+          draft: totalProjects - publishedProjects,
+        },
         media: { total: totalMedia },
         users: { total: totalUsers },
         recentPosts,
         recentPages,
+        recentProjects,
       },
     })
   })

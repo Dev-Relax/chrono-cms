@@ -3,6 +3,7 @@
     "overview": "Overview",
     "posts": "Posts",
     "pages": "Pages",
+    "projects": "Projects",
     "comments": "Comments",
     "media": "Media",
     "design": "Design",
@@ -86,6 +87,17 @@
     "delete": "Delete",
     "deleteConfirm": "Delete this post? This cannot be undone.",
     "search": "Search posts…"
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "A selection of things I've built.",
+    "empty": "No projects published yet.",
+    "featured": "Featured",
+    "liveDemo": "Live demo",
+    "readMore": "Read more",
+    "details": "Details",
+    "notFound": "Project not found",
+    "backToProjects": "Back to projects"
   },
   "comments": {
     "pending": "Pending",

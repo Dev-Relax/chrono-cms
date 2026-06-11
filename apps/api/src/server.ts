@@ -12,6 +12,7 @@ import { rssRoutes } from "./routes/rss.js"
 import { mediaRoutes, UPLOADS_DIR } from "./routes/media.js"
 import { usersRoutes } from "./routes/users.js"
 import { pagesRoutes } from "./routes/pages.js"
+import { projectsRoutes } from "./routes/projects.js"
 import { webhooksRoutes } from "./routes/webhooks.js"
 import { apiKeysRoutes } from "./routes/apikeys.js"
 import { activityRoutes } from "./routes/activity.js"
@@ -48,6 +49,7 @@ const buildApp = async () => {
   await fastify.register(authRoutes)
   await fastify.register(postsRoutes)
   await fastify.register(pagesRoutes)
+  await fastify.register(projectsRoutes)
   await fastify.register(settingsRoutes)
   await fastify.register(webhooksRoutes)
   await fastify.register(apiKeysRoutes)

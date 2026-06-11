@@ -65,7 +65,6 @@ Chronos CMS is a **monorepo** shipping three packages:
 ### Content editing
 
 - **TipTap 2 rich text editor** with full toolbar, Bubble Menu and Floating Menu
-- **Side-by-side preview** — toggle Editor / Split / Preview modes
 - **Syntax-highlighted code blocks** via `lowlight` / `highlight.js` (TypeScript, JavaScript, Bash, JSON, CSS)
 - **Resizable, floatable images** — drag to resize, align left/right/center/block, text wraps around floated images
 - **Image media picker** — modal showing the full media library + external URL tab
