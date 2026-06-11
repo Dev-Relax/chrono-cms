@@ -64,6 +64,25 @@ const projectTranslationSchema = z.object({
   metaDescription: z.string().max(500).optional(),
 })
 
+// Accept only http(s) URLs. z.string().url() alone still passes "javascript:"
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const { protocol } = new URL(value)
+    return protocol === "http:" || protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
+const externalUrlSchema = z
+  .string()
+  .refine((v) => v === "" || isHttpUrl(v), { message: "Must be an http(s) URL" })
+
+// The blog link may also be an internal relative path (e.g. "/posts/my-slug").
+const blogUrlSchema = z.string().refine((v) => v === "" || v.startsWith("/") || isHttpUrl(v), {
+  message: "Must be a relative path or an http(s) URL",
+})
+
 const projectBodySchema = z.object({
   defaultLocale: z.string().default("en"),
   status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
@@ -71,9 +90,9 @@ const projectBodySchema = z.object({
   order: z.number().int().optional(),
   coverImage: z.string().optional(),
   techStack: z.array(z.string()).optional(),
-  githubUrl: z.string().optional(),
-  liveUrl: z.string().optional(),
-  blogUrl: z.string().optional(),
+  githubUrl: externalUrlSchema.optional(),
+  liveUrl: externalUrlSchema.optional(),
+  blogUrl: blogUrlSchema.optional(),
   postId: z.string().nullable().optional(),
   /** Multi-locale payload: keyed by locale ("en", "fr", …) */
   translations: z.record(projectTranslationSchema).optional(),
@@ -196,43 +215,38 @@ export const projectsRoutes = async (fastify: FastifyInstance): Promise<void> =>
     return reply.send({ data: flat })
   })
 
-  fastify.get(
-    "/admin/projects",
-    { preHandler: [fastify.authenticate] },
-    async (request, reply) => {
-      if (!(await requireRole(request, reply, "EDITOR"))) return
+  fastify.get("/admin/projects", { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    if (!(await requireRole(request, reply, "EDITOR"))) return
 
-      const projects = await prisma.project.findMany({
-        select: projectWithTranslationsSelect,
-        orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
-      })
+    const projects = await prisma.project.findMany({
+      select: projectWithTranslationsSelect,
+      orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
+    })
 
-      // Lightweight list: flatten to defaultLocale, include translation count.
-      const data = projects.map((p) => {
-        const defTr =
-          p.translations.find((t) => t.locale === p.defaultLocale) ?? p.translations[0]
-        return {
-          id: p.id,
-          defaultLocale: p.defaultLocale,
-          locale: defTr?.locale ?? p.defaultLocale,
-          title: defTr?.title ?? "",
-          slug: defTr?.slug ?? "",
-          status: p.status,
-          featured: p.featured,
-          order: p.order,
-          coverImage: p.coverImage,
-          techStack: p.techStack,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt,
-          author: p.author,
-          translationCount: p.translations.length,
-          hreflang: p.translations.map((t) => ({ locale: t.locale, slug: t.slug })),
-        }
-      })
+    // Lightweight list: flatten to defaultLocale, include translation count.
+    const data = projects.map((p) => {
+      const defTr = p.translations.find((t) => t.locale === p.defaultLocale) ?? p.translations[0]
+      return {
+        id: p.id,
+        defaultLocale: p.defaultLocale,
+        locale: defTr?.locale ?? p.defaultLocale,
+        title: defTr?.title ?? "",
+        slug: defTr?.slug ?? "",
+        status: p.status,
+        featured: p.featured,
+        order: p.order,
+        coverImage: p.coverImage,
+        techStack: p.techStack,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        author: p.author,
+        translationCount: p.translations.length,
+        hreflang: p.translations.map((t) => ({ locale: t.locale, slug: t.slug })),
+      }
+    })
 
-      return reply.send({ data })
-    },
-  )
+    return reply.send({ data })
+  })
 
   // Reorder must be matched as a static route — declared before the :id handler.
   fastify.put(
@@ -305,7 +319,17 @@ export const projectsRoutes = async (fastify: FastifyInstance): Promise<void> =>
       }
 
       // Internal post link wins — clear the free-form URL when a post is linked.
-      const hasPost = postId !== undefined && postId !== null && postId !== ""
+      const linkedPostId = postId !== undefined && postId !== null && postId !== "" ? postId : null
+
+      if (linkedPostId) {
+        const linkedPost = await prisma.post.findUnique({
+          where: { id: linkedPostId },
+          select: { id: true },
+        })
+        if (!linkedPost) {
+          return reply.status(400).send({ error: "Linked post not found" })
+        }
+      }
 
       const project = await prisma.project.create({
         data: {
@@ -318,8 +342,8 @@ export const projectsRoutes = async (fastify: FastifyInstance): Promise<void> =>
           ...(techStack !== undefined && { techStack }),
           ...(githubUrl !== undefined && { githubUrl }),
           ...(liveUrl !== undefined && { liveUrl }),
-          blogUrl: hasPost ? null : (blogUrl ?? null),
-          postId: hasPost ? postId : null,
+          blogUrl: linkedPostId ? null : (blogUrl ?? null),
+          postId: linkedPostId,
           translations: {
             create: Object.entries(translations).map(([locale, tr]) => ({
               locale,
@@ -394,57 +418,71 @@ export const projectsRoutes = async (fastify: FastifyInstance): Promise<void> =>
         translations = {},
       } = body.data
 
-      // Upsert each locale translation
-      for (const [locale, tr] of Object.entries(translations)) {
-        await prisma.projectTranslation.upsert({
-          where: { projectId_locale: { projectId: id, locale } },
-          create: {
-            projectId: id,
-            locale,
-            title: tr.title,
-            slug: tr.slug ?? slugify(tr.title),
-            content: tr.content as Prisma.InputJsonValue,
-            ...(tr.summary !== undefined && { summary: tr.summary }),
-            ...(tr.metaTitle !== undefined && { metaTitle: tr.metaTitle }),
-            ...(tr.metaDescription !== undefined && { metaDescription: tr.metaDescription }),
-          },
-          update: {
-            title: tr.title,
-            slug: tr.slug ?? slugify(tr.title),
-            content: tr.content as Prisma.InputJsonValue,
-            ...(tr.summary !== undefined && { summary: tr.summary }),
-            ...(tr.metaTitle !== undefined && { metaTitle: tr.metaTitle }),
-            ...(tr.metaDescription !== undefined && { metaDescription: tr.metaDescription }),
-          },
-        })
-      }
-
       // Blog link: when postId is explicitly provided we honour the "one or the
       // other" rule; a non-empty postId clears blogUrl and vice versa.
       const blogLinkUpdate: Prisma.ProjectUpdateInput = {}
       if (postId !== undefined) {
-        const hasPost = postId !== null && postId !== ""
-        blogLinkUpdate.post = hasPost ? { connect: { id: postId } } : { disconnect: true }
-        if (hasPost) blogLinkUpdate.blogUrl = null
-        else if (blogUrl !== undefined) blogLinkUpdate.blogUrl = blogUrl || null
+        const linkedPostId = postId !== null && postId !== "" ? postId : null
+        if (linkedPostId) {
+          const linkedPost = await prisma.post.findUnique({
+            where: { id: linkedPostId },
+            select: { id: true },
+          })
+          if (!linkedPost) {
+            return reply.status(400).send({ error: "Linked post not found" })
+          }
+          blogLinkUpdate.post = { connect: { id: linkedPostId } }
+          blogLinkUpdate.blogUrl = null
+        } else {
+          blogLinkUpdate.post = { disconnect: true }
+          if (blogUrl !== undefined) blogLinkUpdate.blogUrl = blogUrl || null
+        }
       } else if (blogUrl !== undefined) {
         blogLinkUpdate.blogUrl = blogUrl || null
       }
 
-      const updated = await prisma.project.update({
-        where: { id },
-        data: {
-          ...(defaultLocale !== undefined && { defaultLocale }),
-          ...(status !== undefined && { status }),
-          ...(featured !== undefined && { featured }),
-          ...(order !== undefined && { order }),
-          ...(coverImage !== undefined && { coverImage }),
-          ...(techStack !== undefined && { techStack }),
-          ...(githubUrl !== undefined && { githubUrl }),
-          ...(liveUrl !== undefined && { liveUrl }),
-          ...blogLinkUpdate,
-        },
-        select: projectWithTranslationsSelect,
+      // Upsert translations and update the project atomically so a mid-loop
+      // failure can't leave the project partially translated.
+      const updated = await prisma.$transaction(async (tx) => {
+        for (const [locale, tr] of Object.entries(translations)) {
+          await tx.projectTranslation.upsert({
+            where: { projectId_locale: { projectId: id, locale } },
+            create: {
+              projectId: id,
+              locale,
+              title: tr.title,
+              slug: tr.slug ?? slugify(tr.title),
+              content: tr.content as Prisma.InputJsonValue,
+              ...(tr.summary !== undefined && { summary: tr.summary }),
+              ...(tr.metaTitle !== undefined && { metaTitle: tr.metaTitle }),
+              ...(tr.metaDescription !== undefined && { metaDescription: tr.metaDescription }),
+            },
+            update: {
+              title: tr.title,
+              slug: tr.slug ?? slugify(tr.title),
+              content: tr.content as Prisma.InputJsonValue,
+              ...(tr.summary !== undefined && { summary: tr.summary }),
+              ...(tr.metaTitle !== undefined && { metaTitle: tr.metaTitle }),
+              ...(tr.metaDescription !== undefined && { metaDescription: tr.metaDescription }),
+            },
+          })
+        }
+
+        return tx.project.update({
+          where: { id },
+          data: {
+            ...(defaultLocale !== undefined && { defaultLocale }),
+            ...(status !== undefined && { status }),
+            ...(featured !== undefined && { featured }),
+            ...(order !== undefined && { order }),
+            ...(coverImage !== undefined && { coverImage }),
+            ...(techStack !== undefined && { techStack }),
+            ...(githubUrl !== undefined && { githubUrl }),
+            ...(liveUrl !== undefined && { liveUrl }),
+            ...blogLinkUpdate,
+          },
+          select: projectWithTranslationsSelect,
+        })
       })
 
       const userPayload = request.user as { sub: string }
