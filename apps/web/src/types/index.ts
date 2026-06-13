@@ -1,3 +1,18 @@
+export type Testimonial = {
+  id: string
+  author: string
+  role: string | null
+  company: string | null
+  avatarUrl: string | null
+  content: string
+  rating: number
+  featured: boolean
+  visible: boolean
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
 export type EducationTranslation = {
   id: string
   educationId: string

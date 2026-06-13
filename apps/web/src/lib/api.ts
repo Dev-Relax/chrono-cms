@@ -19,6 +19,7 @@ import type {
   SkillLevel,
   Experience,
   Education,
+  Testimonial,
 } from "../types/index.js"
 
 const BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api"
@@ -544,6 +545,36 @@ export const previewApi = {
   /** Fetch a post via its preview token (public, no auth needed). */
   get: (token: string, lang?: string) =>
     request<{ data: Post; preview: boolean }>(`/preview/${token}${lang ? `?lang=${lang}` : ""}`),
+}
+
+export type TestimonialPayload = {
+  author: string
+  role?: string
+  company?: string
+  avatarUrl?: string
+  content: string
+  rating?: number
+  featured?: boolean
+  visible?: boolean
+  order?: number
+}
+
+export const testimonialsApi = {
+  list: (featured?: boolean) =>
+    request<{ data: Testimonial[] }>(`/testimonials${featured ? "?featured=true" : ""}`),
+
+  adminList: () => request<{ data: Testimonial[] }>("/admin/testimonials"),
+
+  create: (payload: TestimonialPayload) =>
+    request<{ data: Testimonial }>("/admin/testimonials", { method: "POST", body: payload }),
+
+  update: (id: string, payload: Partial<TestimonialPayload>) =>
+    request<{ data: Testimonial }>(`/admin/testimonials/${id}`, { method: "PUT", body: payload }),
+
+  delete: (id: string) => request<void>(`/admin/testimonials/${id}`, { method: "DELETE" }),
+
+  reorder: (ids: string[]) =>
+    request<void>("/admin/testimonials/reorder", { method: "PUT", body: { ids } }),
 }
 
 export type EducationTranslationPayload = {
