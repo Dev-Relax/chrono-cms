@@ -15,6 +15,8 @@ import type {
   BrandConfig,
   NavConfig,
   CommentStatus,
+  Skill,
+  SkillLevel,
 } from "../types/index.js"
 
 const BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api"
@@ -540,6 +542,34 @@ export const previewApi = {
   /** Fetch a post via its preview token (public, no auth needed). */
   get: (token: string, lang?: string) =>
     request<{ data: Post; preview: boolean }>(`/preview/${token}${lang ? `?lang=${lang}` : ""}`),
+}
+
+export type SkillPayload = {
+  name: string
+  slug?: string
+  category: string
+  level?: SkillLevel
+  icon?: string
+  order?: number
+  visible?: boolean
+}
+
+export const skillsApi = {
+  list: (category?: string) =>
+    request<{ data: Skill[] }>(`/skills${category ? `?category=${encodeURIComponent(category)}` : ""}`),
+
+  adminList: () => request<{ data: Skill[] }>("/admin/skills"),
+
+  create: (payload: SkillPayload) =>
+    request<{ data: Skill }>("/admin/skills", { method: "POST", body: payload }),
+
+  update: (id: string, payload: Partial<SkillPayload>) =>
+    request<{ data: Skill }>(`/admin/skills/${id}`, { method: "PUT", body: payload }),
+
+  delete: (id: string) => request<void>(`/admin/skills/${id}`, { method: "DELETE" }),
+
+  reorder: (ids: string[]) =>
+    request<void>("/admin/skills/reorder", { method: "PUT", body: { ids } }),
 }
 
 export const revisionsApi = {

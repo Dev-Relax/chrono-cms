@@ -25,8 +25,11 @@ export type ActivityAction =
   | "apikey.deleted"
   | "media.uploaded"
   | "media.deleted"
+  | "skill.created"
+  | "skill.updated"
+  | "skill.deleted"
 
-export type EntityType = "post" | "page" | "project" | "user" | "webhook" | "apikey" | "media"
+export type EntityType = "post" | "page" | "project" | "user" | "webhook" | "apikey" | "media" | "skill"
 
 export interface LogParams {
   userId: string

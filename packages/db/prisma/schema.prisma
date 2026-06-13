@@ -15,6 +15,13 @@ datasource db {
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
 enum Role {
   ADMIN
   EDITOR
@@ -369,6 +376,25 @@ model Comment {
   @@index([status])
   @@index([parentId])
   @@map("comments")
+}
+
+// ── Skill ─────────────────────────────────────────────────────────────────────
+
+model Skill {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  category  String
+  level     SkillLevel @default(INTERMEDIATE)
+  icon      String?
+  order     Int        @default(0)
+  visible   Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([category])
+  @@index([order])
+  @@map("skills")
 }
 
 // ── ActivityLog ───────────────────────────────────────────────────────────────

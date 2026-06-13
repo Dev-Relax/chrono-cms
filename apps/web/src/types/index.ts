@@ -1,3 +1,18 @@
+export type SkillLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT"
+
+export type Skill = {
+  id: string
+  name: string
+  slug: string
+  category: string
+  level: SkillLevel
+  icon: string | null
+  order: number
+  visible: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export type Role = "ADMIN" | "EDITOR" | "AUTHOR"
 export type PostStatus = "DRAFT" | "PUBLISHED"
 export type PageStatus = "DRAFT" | "PUBLISHED"
