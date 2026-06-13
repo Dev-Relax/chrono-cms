@@ -82,6 +82,19 @@ export type Skill = {
   updatedAt: string
 }
 
+export type SubmissionStatus = "NEW" | "READ" | "ARCHIVED"
+
+export type ContactSubmission = {
+  id: string
+  name: string
+  email: string
+  subject: string | null
+  message: string
+  status: SubmissionStatus
+  createdAt: string
+  updatedAt: string
+}
+
 export type Role = "ADMIN" | "EDITOR" | "AUTHOR"
 export type PostStatus = "DRAFT" | "PUBLISHED"
 export type PageStatus = "DRAFT" | "PUBLISHED"

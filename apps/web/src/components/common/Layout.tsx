@@ -6,7 +6,7 @@ export const NavTransitionContext = React.createContext<React.TransitionStartFun
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../../context/AuthContext.js"
 import { useTheme } from "../../context/ThemeContext.js"
-import { commentsApi } from "../../lib/api.js"
+import { commentsApi, contactApi } from "../../lib/api.js"
 import { LanguageSwitcher } from "./LanguageSwitcher.js"
 import type { HeaderStyle } from "../../types/index.js"
 
@@ -40,6 +40,7 @@ const NAV_SECTIONS: { titleKey: string; items: NavItem[] }[] = [
       { to: "/admin/experiences", label: "nav.experiences", icon: "🏢" },
       { to: "/admin/education", label: "nav.education", icon: "🎓" },
       { to: "/admin/testimonials", label: "nav.testimonials", icon: "★" },
+      { to: "/admin/contact", label: "nav.contact", icon: "✉" },
     ],
   },
   {
@@ -70,19 +71,22 @@ export const AdminSidebar: React.FC = () => {
   const user = state.status === "authenticated" ? state.user : null
 
   const [pendingCount, setPendingCount] = useState(0)
+  const [newContactCount, setNewContactCount] = useState(0)
 
   useEffect(() => {
     if (state.status !== "authenticated") return
-    const fetch = () => {
+    const fetchCounts = () => {
       commentsApi
         .pendingCount()
         .then(({ count }) => setPendingCount(count))
-        .catch(() => {
-          /* ignore */
-        })
+        .catch(() => { /* ignore */ })
+      contactApi
+        .newCount()
+        .then(({ count }) => setNewContactCount(count))
+        .catch(() => { /* ignore */ })
     }
-    fetch()
-    const id = setInterval(fetch, 60_000)
+    fetchCounts()
+    const id = setInterval(fetchCounts, 60_000)
     return () => clearInterval(id)
   }, [state.status])
 
@@ -139,6 +143,14 @@ export const AdminSidebar: React.FC = () => {
                                          text-[10px] font-bold leading-none text-black"
                         >
                           {pendingCount > 99 ? "99+" : pendingCount}
+                        </span>
+                      )}
+                      {item.to === "/admin/contact" && newContactCount > 0 && (
+                        <span
+                          className="ml-auto rounded-full bg-brand-500 px-1.5 py-0.5
+                                         text-[10px] font-bold leading-none text-white"
+                        >
+                          {newContactCount > 99 ? "99+" : newContactCount}
                         </span>
                       )}
                     </NavLink>

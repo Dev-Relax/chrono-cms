@@ -14,6 +14,7 @@ export type WebhookEvent =
   | "project.updated"
   | "project.published"
   | "project.deleted"
+  | "contact.submitted"
 
 interface WebhookPayload {
   event: WebhookEvent

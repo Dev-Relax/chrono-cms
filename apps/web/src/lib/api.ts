@@ -20,6 +20,8 @@ import type {
   Experience,
   Education,
   Testimonial,
+  ContactSubmission,
+  SubmissionStatus,
 } from "../types/index.js"
 
 const BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api"
@@ -675,6 +677,41 @@ export const skillsApi = {
 
   reorder: (ids: string[]) =>
     request<void>("/admin/skills/reorder", { method: "PUT", body: { ids } }),
+}
+
+export type ContactSubmitPayload = {
+  name: string
+  email: string
+  subject?: string
+  message: string
+}
+
+export const contactApi = {
+  /** Public: submit a contact form */
+  submit: (payload: ContactSubmitPayload) =>
+    request<{ data: ContactSubmission; message: string }>("/contact", {
+      method: "POST",
+      body: payload,
+    }),
+
+  /** Admin: new-submission badge count */
+  newCount: () => request<{ count: number }>("/admin/contact/new-count"),
+
+  /** Admin: list submissions */
+  adminList: (status?: SubmissionStatus, page?: number, limit?: number) =>
+    request<PaginatedResponse<ContactSubmission>>(
+      `/admin/contact${buildQuery({ status, page, limit })}`,
+    ),
+
+  /** Admin: change status */
+  moderate: (id: string, status: SubmissionStatus) =>
+    request<{ data: ContactSubmission }>(`/admin/contact/${id}`, {
+      method: "PATCH",
+      body: { status },
+    }),
+
+  /** Admin: delete */
+  delete: (id: string) => request<void>(`/admin/contact/${id}`, { method: "DELETE" }),
 }
 
 export const revisionsApi = {
