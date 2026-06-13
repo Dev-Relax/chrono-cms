@@ -183,6 +183,14 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
   "instagram",
   "youtube",
   "rss",
+  "bluesky",
+  "mastodon",
+  "devto",
+  "dribbble",
+  "codepen",
+  "stackoverflow",
+  "twitch",
+  "discord",
 ]
 
 const SOCIAL_ICONS: Record<SocialPlatform, string> = {
@@ -192,6 +200,14 @@ const SOCIAL_ICONS: Record<SocialPlatform, string> = {
   instagram: "◎",
   youtube: "▶",
   rss: "◉",
+  bluesky: "☁",
+  mastodon: "🐘",
+  devto: "DEV",
+  dribbble: "⛹",
+  codepen: "</>",
+  stackoverflow: "SO",
+  twitch: "◈",
+  discord: "💬",
 }
 
 const WidgetRow: React.FC<{

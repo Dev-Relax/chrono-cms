@@ -38,8 +38,24 @@ const themeTypographySchema = z.object({
 })
 
 const socialLinkSchema = z.object({
-  platform: z.enum(["twitter", "github", "linkedin", "instagram", "youtube", "rss"]),
-  url: z.string(),
+  platform: z.enum([
+    "twitter",
+    "github",
+    "linkedin",
+    "instagram",
+    "youtube",
+    "rss",
+    "dribbble",
+    "devto",
+    "bluesky",
+    "mastodon",
+    "twitch",
+    "discord",
+    "codepen",
+    "stackoverflow",
+  ]),
+  url: z.string().max(500),
+  label: z.string().max(100).optional(),
 })
 
 const sidebarWidgetSchema = z.object({
@@ -72,6 +88,7 @@ const brandConfigSchema = z.object({
   seoDescription: z.string().max(300),
   logoUrl: z.string().max(500),
   ogImage: z.string().max(500),
+  socialLinks: z.array(socialLinkSchema).optional(),
 })
 
 const navItemSchema = z.object({

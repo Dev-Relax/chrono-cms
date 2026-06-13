@@ -109,7 +109,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setDraftThemeState(theme)
         applyThemeToDom(theme)
 
-        const brand = { ...DEFAULT_BRAND_CONFIG, ...data.brandConfig }
+        const brand: BrandConfig = {
+          ...DEFAULT_BRAND_CONFIG,
+          ...(data.brandConfig as Partial<BrandConfig>),
+          socialLinks: (data.brandConfig as Partial<BrandConfig>).socialLinks ?? [],
+        }
         setSavedBrand(brand)
         setDraftBrandState(brand)
         if (brand.seoTitle) document.title = brand.seoTitle

@@ -234,8 +234,22 @@ export type ThemeTypographyConfig = { fontPair: FontPair }
 
 export type SidebarWidgetType = "about" | "tags" | "recent_posts" | "social_links" | "custom_text"
 
-export type SocialPlatform = "twitter" | "github" | "linkedin" | "instagram" | "youtube" | "rss"
-export type SocialLink = { platform: SocialPlatform; url: string }
+export type SocialPlatform =
+  | "twitter"
+  | "github"
+  | "linkedin"
+  | "instagram"
+  | "youtube"
+  | "rss"
+  | "dribbble"
+  | "devto"
+  | "bluesky"
+  | "mastodon"
+  | "twitch"
+  | "discord"
+  | "codepen"
+  | "stackoverflow"
+export type SocialLink = { platform: SocialPlatform; url: string; label?: string }
 
 export type SidebarWidget = {
   id: string
@@ -305,6 +319,8 @@ export type BrandConfig = {
   logoUrl: string
   /** Default Open Graph / social share image URL */
   ogImage: string
+  /** Social / professional profile links shown in the portfolio */
+  socialLinks: SocialLink[]
 }
 
 export const DEFAULT_BRAND_CONFIG: BrandConfig = {
@@ -314,6 +330,7 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   seoDescription: "",
   logoUrl: "",
   ogImage: "",
+  socialLinks: [],
 }
 
 export type NavItemType = "blog" | "projects" | "page" | "custom"
