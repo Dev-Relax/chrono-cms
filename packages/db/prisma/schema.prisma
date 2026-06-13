@@ -378,6 +378,38 @@ model Comment {
   @@map("comments")
 }
 
+// ── Education ─────────────────────────────────────────────────────────────────
+
+model Education {
+  id           String                 @id @default(cuid())
+  institution  String
+  field        String?
+  startDate    DateTime
+  endDate      DateTime?
+  url          String?
+  logoUrl      String?
+  order        Int                    @default(0)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  translations EducationTranslation[]
+
+  @@index([order])
+  @@map("education")
+}
+
+model EducationTranslation {
+  id          String    @id @default(cuid())
+  educationId String
+  locale      String
+  degree      String
+  description Json      @default("{}")
+  education   Education @relation(fields: [educationId], references: [id], onDelete: Cascade)
+
+  @@unique([educationId, locale])
+  @@index([locale])
+  @@map("education_translations")
+}
+
 // ── Experience ────────────────────────────────────────────────────────────────
 
 model Experience {

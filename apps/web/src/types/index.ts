@@ -1,3 +1,30 @@
+export type EducationTranslation = {
+  id: string
+  educationId: string
+  locale: string
+  degree: string
+  description: TipTapDoc
+}
+
+export type Education = {
+  id: string
+  institution: string
+  field: string | null
+  startDate: string
+  endDate: string | null
+  url: string | null
+  logoUrl: string | null
+  order: number
+  createdAt: string
+  updatedAt: string
+  locale: string
+  degree: string
+  description: TipTapDoc
+  translationCount?: number
+  hreflang?: Array<{ locale: string }>
+  translations?: EducationTranslation[]
+}
+
 export type ExperienceTranslation = {
   id: string
   experienceId: string
