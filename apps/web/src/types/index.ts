@@ -1,3 +1,30 @@
+export type ExperienceTranslation = {
+  id: string
+  experienceId: string
+  locale: string
+  role: string
+  description: TipTapDoc
+}
+
+export type Experience = {
+  id: string
+  company: string
+  location: string | null
+  startDate: string
+  endDate: string | null
+  url: string | null
+  logoUrl: string | null
+  order: number
+  createdAt: string
+  updatedAt: string
+  locale: string
+  role: string
+  description: TipTapDoc
+  translationCount?: number
+  hreflang?: Array<{ locale: string }>
+  translations?: ExperienceTranslation[]
+}
+
 export type SkillLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT"
 
 export type Skill = {

@@ -378,6 +378,38 @@ model Comment {
   @@map("comments")
 }
 
+// ── Experience ────────────────────────────────────────────────────────────────
+
+model Experience {
+  id           String                  @id @default(cuid())
+  company      String
+  location     String?
+  startDate    DateTime
+  endDate      DateTime?
+  url          String?
+  logoUrl      String?
+  order        Int                     @default(0)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  translations ExperienceTranslation[]
+
+  @@index([order])
+  @@map("experiences")
+}
+
+model ExperienceTranslation {
+  id           String     @id @default(cuid())
+  experienceId String
+  locale       String
+  role         String
+  description  Json       @default("{}")
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([experienceId, locale])
+  @@index([locale])
+  @@map("experience_translations")
+}
+
 // ── Skill ─────────────────────────────────────────────────────────────────────
 
 model Skill {

@@ -28,8 +28,20 @@ export type ActivityAction =
   | "skill.created"
   | "skill.updated"
   | "skill.deleted"
+  | "experience.created"
+  | "experience.updated"
+  | "experience.deleted"
 
-export type EntityType = "post" | "page" | "project" | "user" | "webhook" | "apikey" | "media" | "skill"
+export type EntityType =
+  | "post"
+  | "page"
+  | "project"
+  | "user"
+  | "webhook"
+  | "apikey"
+  | "media"
+  | "skill"
+  | "experience"
 
 export interface LogParams {
   userId: string

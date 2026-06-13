@@ -17,6 +17,7 @@ import type {
   CommentStatus,
   Skill,
   SkillLevel,
+  Experience,
 } from "../types/index.js"
 
 const BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api"
@@ -542,6 +543,42 @@ export const previewApi = {
   /** Fetch a post via its preview token (public, no auth needed). */
   get: (token: string, lang?: string) =>
     request<{ data: Post; preview: boolean }>(`/preview/${token}${lang ? `?lang=${lang}` : ""}`),
+}
+
+export type ExperienceTranslationPayload = {
+  role: string
+  description: Record<string, unknown>
+}
+
+export type ExperiencePayload = {
+  company: string
+  location?: string
+  startDate: string
+  endDate?: string | null
+  url?: string
+  logoUrl?: string
+  order?: number
+  translations?: Record<string, ExperienceTranslationPayload>
+}
+
+export const experiencesApi = {
+  list: (lang?: string) =>
+    request<{ data: Experience[] }>(`/experiences${lang ? `?lang=${encodeURIComponent(lang)}` : ""}`),
+
+  adminList: () => request<{ data: Experience[] }>("/admin/experiences"),
+
+  adminGet: (id: string) => request<{ data: Experience }>(`/admin/experiences/${id}`),
+
+  create: (payload: ExperiencePayload) =>
+    request<{ data: Experience }>("/admin/experiences", { method: "POST", body: payload }),
+
+  update: (id: string, payload: Partial<ExperiencePayload>) =>
+    request<{ data: Experience }>(`/admin/experiences/${id}`, { method: "PUT", body: payload }),
+
+  delete: (id: string) => request<void>(`/admin/experiences/${id}`, { method: "DELETE" }),
+
+  reorder: (ids: string[]) =>
+    request<void>("/admin/experiences/reorder", { method: "PUT", body: { ids } }),
 }
 
 export type SkillPayload = {

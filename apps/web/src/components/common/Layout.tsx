@@ -37,6 +37,7 @@ const NAV_SECTIONS: { titleKey: string; items: NavItem[] }[] = [
       { to: "/admin/projects", label: "nav.projects", icon: "🗂" },
       { to: "/admin/comments", label: "nav.comments", icon: "💬" },
       { to: "/admin/skills", label: "nav.skills", icon: "⚙" },
+      { to: "/admin/experiences", label: "nav.experiences", icon: "🏢" },
     ],
   },
   {
