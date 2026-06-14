@@ -129,52 +129,66 @@ export const rssRoutes = async (fastify: FastifyInstance): Promise<void> => {
       .send(xml)
   })
 
-  // Emits one <url> per locale translation (posts + pages).
+  // Emits one <url> per locale translation (posts + pages + projects).
   fastify.get("/sitemap.xml", async (request, reply) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = prisma as any
-    const base = siteUrl(request.headers["origin"] as string | undefined)
 
-    const [postsRaw, pagesRaw] = await Promise.all([
+    const [postsRaw, pagesRaw, projectsRaw, siteSettings] = await Promise.all([
       db.post.findMany({
         where: { status: "PUBLISHED" },
         orderBy: { publishedAt: "desc" },
-        select: {
-          updatedAt: true,
-          translations: { select: { locale: true, slug: true } },
-        },
+        select: { updatedAt: true, translations: { select: { locale: true, slug: true } } },
       }),
       db.page.findMany({
         where: { status: "PUBLISHED" },
         orderBy: { updatedAt: "desc" },
-        select: {
-          updatedAt: true,
-          translations: { select: { locale: true, slug: true } },
-        },
+        select: { updatedAt: true, translations: { select: { locale: true, slug: true } } },
       }),
+      db.project.findMany({
+        where: { status: "PUBLISHED" },
+        orderBy: { order: "asc" },
+        select: { updatedAt: true, translations: { select: { locale: true, slug: true } } },
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma.siteSettings.findUnique as any)({ where: { id: "singleton" } }),
     ])
+
+    const brand = (siteSettings?.brandConfig ?? {}) as Record<string, unknown>
+    const configuredUrl = typeof brand["siteUrl"] === "string" ? brand["siteUrl"].replace(/\/$/, "") : ""
+    const base = configuredUrl || siteUrl(request.headers["origin"] as string | undefined)
+
+    const u = (loc: string, lastmod: string, freq: string, priority: string) =>
+      `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${freq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const postUrls = (postsRaw as any[]).flatMap((p) =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (p.translations ?? []).map((t: any) => {
-        const lastmod = (p.updatedAt as Date).toISOString().split("T")[0]
-        return `  <url>\n    <loc>${base}/posts/${t.slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`
-      }),
+      (p.translations ?? []).map((t: any) =>
+        u(`${base}/posts/${t.slug}`, (p.updatedAt as Date).toISOString().split("T")[0]!, "weekly", "0.8"),
+      ),
+    )
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const projectUrls = (projectsRaw as any[]).flatMap((p) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (p.translations ?? []).map((t: any) =>
+        u(`${base}/projects/${t.slug}`, (p.updatedAt as Date).toISOString().split("T")[0]!, "weekly", "0.7"),
+      ),
     )
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pageUrls = (pagesRaw as any[]).flatMap((p) =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (p.translations ?? []).map((t: any) => {
-        const lastmod = (p.updatedAt as Date).toISOString().split("T")[0]
-        return `  <url>\n    <loc>${base}/${t.slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>`
-      }),
+      (p.translations ?? []).map((t: any) =>
+        u(`${base}/${t.slug}`, (p.updatedAt as Date).toISOString().split("T")[0]!, "monthly", "0.6"),
+      ),
     )
 
     const urls = [
-      `  <url>\n    <loc>${base}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+      u(`${base}/`, new Date().toISOString().split("T")[0]!, "daily", "1.0"),
       ...postUrls,
+      ...projectUrls,
       ...pageUrls,
     ].join("\n")
 
