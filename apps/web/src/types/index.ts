@@ -401,6 +401,8 @@ export type BrandConfig = {
   logoUrl: string
   /** Default Open Graph / social share image URL */
   ogImage: string
+  /** Canonical site URL used for sitemap.xml and hreflang (e.g. https://example.com) */
+  siteUrl: string
   /** Social / professional profile links shown in the portfolio */
   socialLinks: SocialLink[]
 }
@@ -412,6 +414,7 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   seoDescription: "",
   logoUrl: "",
   ogImage: "",
+  siteUrl: "",
   socialLinks: [],
 }
 

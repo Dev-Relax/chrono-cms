@@ -25,6 +25,7 @@ const DEFAULT_BRAND_CONFIG = {
   seoDescription: "",
   logoUrl: "",
   ogImage: "",
+  siteUrl: "",
 } as const
 
 const themeColorsSchema = z.object({
@@ -88,6 +89,7 @@ const brandConfigSchema = z.object({
   seoDescription: z.string().max(300),
   logoUrl: z.string().max(500),
   ogImage: z.string().max(500),
+  siteUrl: z.string().url().max(500).or(z.literal("")).optional(),
   socialLinks: z.array(socialLinkSchema).optional(),
 })
 

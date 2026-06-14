@@ -161,6 +161,20 @@ const BrandingPage: React.FC = () => {
             SEO &amp; Social
           </h2>
 
+          <Field
+            label="Site URL"
+            hint="Canonical root URL used for sitemap.xml and hreflang (e.g. https://example.com)."
+          >
+            <input
+              type="url"
+              className={inputCls}
+              value={draftBrand.siteUrl ?? ""}
+              onChange={(e) => set("siteUrl", e.target.value)}
+              placeholder="https://example.com"
+              maxLength={500}
+            />
+          </Field>
+
           <Field label="SEO title" hint="Sets the browser <title> for your site (max 100 chars).">
             <input
               type="text"
