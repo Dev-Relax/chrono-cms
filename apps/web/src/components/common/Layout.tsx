@@ -41,6 +41,7 @@ const NAV_SECTIONS: { titleKey: string; items: NavItem[] }[] = [
       { to: "/admin/education", label: "nav.education", icon: "🎓" },
       { to: "/admin/testimonials", label: "nav.testimonials", icon: "★" },
       { to: "/admin/contact", label: "nav.contact", icon: "✉" },
+      { to: "/admin/certifications", label: "nav.certifications", icon: "🏅" },
     ],
   },
   {

@@ -24,6 +24,7 @@ import { educationRoutes } from "./routes/education.js"
 import { testimonialsRoutes } from "./routes/testimonials.js"
 import { contactRoutes } from "./routes/contact.js"
 import { sitemapRoutes } from "./routes/sitemap.js"
+import { certificationsRoutes } from "./routes/certifications.js"
 
 const buildApp = async () => {
   const fastify = Fastify({
@@ -68,6 +69,7 @@ const buildApp = async () => {
   await fastify.register(testimonialsRoutes)
   await fastify.register(contactRoutes)
   await fastify.register(sitemapRoutes)
+  await fastify.register(certificationsRoutes)
   await fastify.register(rssRoutes)
   await fastify.register(mediaRoutes)
   await fastify.register(usersRoutes)

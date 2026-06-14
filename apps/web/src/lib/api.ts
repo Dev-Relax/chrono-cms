@@ -22,6 +22,7 @@ import type {
   Testimonial,
   ContactSubmission,
   SubmissionStatus,
+  Certification,
 } from "../types/index.js"
 
 const BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "/api"
@@ -712,6 +713,36 @@ export const contactApi = {
 
   /** Admin: delete */
   delete: (id: string) => request<void>(`/admin/contact/${id}`, { method: "DELETE" }),
+}
+
+export type CertificationPayload = {
+  title: string
+  issuer: string
+  issuedAt: string
+  expiresAt?: string | null
+  credentialUrl?: string | null
+  logoUrl?: string | null
+  order?: number
+}
+
+export const certificationsApi = {
+  list: () => request<{ data: Certification[] }>("/certifications"),
+
+  adminList: () => request<{ data: Certification[] }>("/admin/certifications"),
+
+  create: (payload: CertificationPayload) =>
+    request<{ data: Certification }>("/admin/certifications", { method: "POST", body: payload }),
+
+  update: (id: string, payload: Partial<CertificationPayload>) =>
+    request<{ data: Certification }>(`/admin/certifications/${id}`, {
+      method: "PUT",
+      body: payload,
+    }),
+
+  delete: (id: string) => request<void>(`/admin/certifications/${id}`, { method: "DELETE" }),
+
+  reorder: (ids: string[]) =>
+    request<void>("/admin/certifications/reorder", { method: "PUT", body: { ids } }),
 }
 
 export const revisionsApi = {

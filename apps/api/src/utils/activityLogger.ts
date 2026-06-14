@@ -37,6 +37,9 @@ export type ActivityAction =
   | "testimonial.created"
   | "testimonial.updated"
   | "testimonial.deleted"
+  | "certification.created"
+  | "certification.updated"
+  | "certification.deleted"
 
 export type EntityType =
   | "post"
@@ -50,6 +53,7 @@ export type EntityType =
   | "experience"
   | "education"
   | "testimonial"
+  | "certification"
 
 export interface LogParams {
   userId: string

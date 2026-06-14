@@ -82,6 +82,19 @@ export type Skill = {
   updatedAt: string
 }
 
+export type Certification = {
+  id: string
+  title: string
+  issuer: string
+  issuedAt: string
+  expiresAt: string | null
+  credentialUrl: string | null
+  logoUrl: string | null
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
 export type SubmissionStatus = "NEW" | "READ" | "ARCHIVED"
 
 export type ContactSubmission = {
