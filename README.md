@@ -1,6 +1,6 @@
 # Chronos CMS
 
-> A self-hostable, open-source **hybrid CMS** — ships with a full admin UI, a built-in public blog, and a clean REST API so any external frontend can consume your content.
+> A self-hostable, open-source **headless CMS built for developer portfolios** — manage your blog posts, projects, skills, work history, testimonials, and certifications in one place, then expose it all through a clean REST API so any frontend can consume it.
 
 ---
 
@@ -51,7 +51,9 @@
 
 ## Overview
 
-Chronos CMS is a **monorepo** shipping three packages:
+Chronos CMS was built specifically for developers who want a single backend to power their entire online presence — blog, portfolio grid, CV data (skills, work experience, education, certifications), testimonials, and a contact inbox — without stitching together a dozen separate tools.
+
+It is a **monorepo** shipping three packages:
 
 | Package        | Path           | Role                                          |
 | -------------- | -------------- | --------------------------------------------- |
@@ -61,9 +63,9 @@ Chronos CMS is a **monorepo** shipping three packages:
 
 ### Two ways to use it
 
-**Batteries-included blog** — deploy `apps/web` and use the built-in public blog. The Design Customizer controls layout, colours, and sidebar widgets. No external frontend needed.
+**Batteries-included portfolio site** — deploy `apps/web` and get a ready-made public blog and projects grid out of the box. The Design Customizer controls layout, colours, and sidebar widgets. No external frontend needed.
 
-**Headless API backend** — point your own Next.js / Nuxt / Astro / mobile app at the API. Content is returned as TipTap JSON (or HTML/Markdown on demand via `?format=`). The built-in frontend becomes a pure admin panel.
+**Headless API backend** — point your own Next.js / Nuxt / Astro site at the API and build a fully custom portfolio frontend. Content is returned as TipTap JSON (or HTML/Markdown on demand via `?format=`). The built-in frontend becomes a pure admin panel.
 
 ---
 
@@ -2034,4 +2036,4 @@ docker build -f apps/web/Dockerfile \
 
 ---
 
-_Built for developers who want full control over their content._
+_Built for developers who want a single, self-hosted backend to power their portfolio — writing, projects, and professional history all in one place._
