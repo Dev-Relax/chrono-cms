@@ -1,0 +1,555 @@
+# Chronos CMS
+
+> Portfolio-focused headless CMS. Manages blog posts, portfolio projects, and structured CV data (skills, work experience, education, certifications, testimonials). Built on Fastify 4 + PostgreSQL via Prisma ORM. Content is stored as TipTap ProseMirror JSON.
+
+Base URL: configured per deployment (e.g. https://api.yourdomain.com). All examples use `$API`.
+
+---
+
+## Authentication
+
+```
+POST $API/auth/login
+Content-Type: application/json
+
+{ "email": "admin@chronos.dev", "password": "Admin1234!" }
+
+→ 200 { "token": "<jwt>", "user": { "id", "email", "name", "role" } }
+```
+
+Every `/admin/*` endpoint requires:
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## TipTap JSON format
+
+All rich-text `content` fields use TipTap ProseMirror JSON. The API accepts and returns this format by default. Append `?format=html` or `?format=markdown` to any public read endpoint to get converted output instead.
+
+**Empty document**
+```json
+{ "type": "doc", "content": [] }
+```
+
+**Paragraph**
+```json
+{
+  "type": "paragraph",
+  "content": [{ "type": "text", "text": "Hello world" }]
+}
+```
+
+**Heading (h2)**
+```json
+{
+  "type": "heading",
+  "attrs": { "level": 2 },
+  "content": [{ "type": "text", "text": "Section title" }]
+}
+```
+
+**Bold / italic / code inline**
+```json
+{ "type": "text", "text": "Bold", "marks": [{ "type": "bold" }] }
+{ "type": "text", "text": "Italic", "marks": [{ "type": "italic" }] }
+{ "type": "text", "text": "code", "marks": [{ "type": "code" }] }
+```
+
+**Link**
+```json
+{
+  "type": "text",
+  "text": "Click here",
+  "marks": [{ "type": "link", "attrs": { "href": "https://example.com", "target": "_blank" } }]
+}
+```
+
+**Bullet list**
+```json
+{
+  "type": "bulletList",
+  "content": [
+    { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Item one" }] }] },
+    { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Item two" }] }] }
+  ]
+}
+```
+
+**Code block**
+```json
+{
+  "type": "codeBlock",
+  "attrs": { "language": "typescript" },
+  "content": [{ "type": "text", "text": "const x: number = 42" }]
+}
+```
+
+**Blockquote**
+```json
+{
+  "type": "blockquote",
+  "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "A quote." }] }]
+}
+```
+
+**Full example document**
+```json
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "My Post" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "This is " },
+        { "type": "text", "text": "bold", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": " text." }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Blog Posts
+
+Public endpoints return content flattened to the requested locale plus a `hreflang[]` array.
+
+### List published posts
+```
+GET $API/posts?lang=en&page=1&limit=10&tag=typescript&format=json
+```
+
+### Get a single post by slug
+```
+GET $API/posts/my-post-slug?lang=en&format=markdown
+```
+
+### Search posts
+```
+GET $API/posts/search?q=javascript&lang=en
+```
+
+### Create a post (admin)
+```
+POST $API/admin/posts
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "defaultLocale": "en",
+  "status": "PUBLISHED",
+  "featured": false,
+  "scheduledAt": null,
+  "tags": ["typescript", "webdev"],
+  "translations": {
+    "en": {
+      "title": "My Post Title",
+      "slug": "my-post-title",
+      "content": { "type": "doc", "content": [ ... ] },
+      "excerpt": "Short summary of the post.",
+      "metaTitle": "SEO title",
+      "metaDescription": "SEO description"
+    }
+  }
+}
+
+→ 201 { "data": Post }
+```
+
+### Update a post (partial, translations are upserted)
+```
+PUT $API/admin/posts/:id
+Authorization: Bearer <token>
+
+{
+  "status": "PUBLISHED",
+  "translations": {
+    "en": { "title": "Updated title", "slug": "updated-slug" }
+  }
+}
+```
+
+### Schedule a post
+Set `"status": "DRAFT"` and `"scheduledAt": "2026-07-01T09:00:00.000Z"`. A background job publishes it automatically.
+
+### Delete a post
+```
+DELETE $API/admin/posts/:id
+→ 204
+```
+
+### Bulk actions
+```
+POST $API/admin/posts/bulk
+{ "action": "publish" | "unpublish" | "delete", "ids": ["id1", "id2"] }
+```
+
+---
+
+## Portfolio Projects
+
+### List published projects
+```
+GET $API/projects?lang=en
+```
+
+### Get a single project
+```
+GET $API/projects/my-project-slug?lang=en&format=html
+```
+
+### Create a project (admin)
+```
+POST $API/admin/projects
+Authorization: Bearer <token>
+
+{
+  "defaultLocale": "en",
+  "status": "PUBLISHED",
+  "featured": true,
+  "order": 0,
+  "coverImage": "/uploads/cover.webp",
+  "techStack": ["TypeScript", "React", "Fastify"],
+  "githubUrl": "https://github.com/username/repo",
+  "liveUrl": "https://demo.example.com",
+  "translations": {
+    "en": {
+      "title": "My Project",
+      "slug": "my-project",
+      "summary": "One-line description shown on the portfolio grid.",
+      "content": { "type": "doc", "content": [ ... ] },
+      "metaTitle": "My Project — Portfolio",
+      "metaDescription": "Detailed SEO description."
+    }
+  }
+}
+
+→ 201 { "data": Project }
+```
+
+### Update a project
+```
+PUT $API/admin/projects/:id
+Authorization: Bearer <token>
+
+{ "featured": true, "techStack": ["Go", "React"] }
+```
+
+### Reorder projects
+```
+PUT $API/admin/projects/reorder
+Authorization: Bearer <token>
+
+{ "ids": ["id_first", "id_second", "id_third"] }
+```
+
+### Delete a project
+```
+DELETE $API/admin/projects/:id
+→ 204
+```
+
+---
+
+## Skills
+
+Levels: `BEGINNER` | `INTERMEDIATE` | `ADVANCED` | `EXPERT`
+
+### List visible skills
+```
+GET $API/skills?category=Frontend
+```
+
+### Create a skill
+```
+POST $API/admin/skills
+Authorization: Bearer <token>
+
+{
+  "name": "TypeScript",
+  "category": "Frontend",
+  "level": "EXPERT",
+  "icon": "typescript",
+  "visible": true,
+  "order": 0
+}
+```
+
+### Update a skill
+```
+PUT $API/admin/skills/:id
+{ "level": "EXPERT", "visible": true }
+```
+
+### Reorder skills
+```
+PUT $API/admin/skills/reorder
+{ "ids": ["id1", "id2", "id3"] }
+```
+
+### Delete a skill
+```
+DELETE $API/admin/skills/:id
+```
+
+---
+
+## Work Experience
+
+Supports i18n: `role` and rich-text `description` are per-locale; company/location/dates are global.
+
+### List experiences
+```
+GET $API/experiences?lang=en
+```
+
+### Create an experience
+```
+POST $API/admin/experiences
+Authorization: Bearer <token>
+
+{
+  "company": "Acme Corp",
+  "location": "Paris, France",
+  "startDate": "2022-01-01T00:00:00.000Z",
+  "endDate": null,
+  "url": "https://acme.com",
+  "logoUrl": "/uploads/acme.webp",
+  "translations": {
+    "en": {
+      "role": "Senior Full-Stack Engineer",
+      "description": { "type": "doc", "content": [ ... ] }
+    }
+  }
+}
+```
+
+### Update / delete / reorder
+```
+PUT  $API/admin/experiences/:id
+PUT  $API/admin/experiences/reorder  { "ids": [...] }
+DELETE $API/admin/experiences/:id
+```
+
+---
+
+## Education
+
+Same structure as Work Experience. Fields: `institution`, `field`, `startDate`, `endDate`, `url`, `logoUrl`. Translations: `degree`, `description`.
+
+```
+GET    $API/education?lang=en
+POST   $API/admin/education
+PUT    $API/admin/education/:id
+PUT    $API/admin/education/reorder  { "ids": [...] }
+DELETE $API/admin/education/:id
+```
+
+Example body:
+```json
+{
+  "institution": "MIT",
+  "field": "Computer Science",
+  "startDate": "2018-09-01T00:00:00.000Z",
+  "endDate": "2022-06-30T00:00:00.000Z",
+  "translations": {
+    "en": { "degree": "B.Sc.", "description": { "type": "doc", "content": [] } }
+  }
+}
+```
+
+---
+
+## Certifications
+
+```
+GET    $API/certifications
+POST   $API/admin/certifications
+PUT    $API/admin/certifications/:id
+PUT    $API/admin/certifications/reorder  { "ids": [...] }
+DELETE $API/admin/certifications/:id
+```
+
+Example body:
+```json
+{
+  "title": "AWS Solutions Architect – Associate",
+  "issuer": "Amazon Web Services",
+  "issuedAt": "2024-03-01T00:00:00.000Z",
+  "expiresAt": "2027-03-01T00:00:00.000Z",
+  "credentialUrl": "https://aws.amazon.com/verification/...",
+  "logoUrl": "/uploads/aws.webp"
+}
+```
+
+---
+
+## Testimonials
+
+```
+GET    $API/testimonials?featured=true
+POST   $API/admin/testimonials
+PUT    $API/admin/testimonials/:id
+PUT    $API/admin/testimonials/reorder  { "ids": [...] }
+DELETE $API/admin/testimonials/:id
+```
+
+Example body:
+```json
+{
+  "author": "Jane Smith",
+  "role": "CTO",
+  "company": "Acme Corp",
+  "avatarUrl": "https://example.com/avatar.jpg",
+  "content": "Working with this developer was a pleasure. Highly recommend.",
+  "rating": 5,
+  "featured": true,
+  "visible": true
+}
+```
+
+---
+
+## Media (image upload)
+
+Uploaded files are stored at `/uploads/*`. Raster images are auto-converted to WebP (max 1920×1920, quality 85). SVG is stored as-is.
+
+```
+POST $API/admin/media
+Authorization: Bearer <token>
+Content-Type: multipart/form-data; field name: "file"
+
+→ 201 { "data": { "url": "/uploads/<uuid>.webp", "filename", "mimeType", "size" } }
+```
+
+Use the returned `url` in post/project `content`, `coverImage`, `logoUrl`, or `ogImage` fields.
+
+```
+GET    $API/admin/media        (list all, newest first)
+DELETE $API/admin/media/:filename
+```
+
+---
+
+## Site Settings & Branding
+
+### Read settings (public)
+```
+GET $API/settings
+→ { "data": { "themeConfig": {...}, "brandConfig": {...} } }
+```
+
+### Update settings (admin)
+```
+PUT $API/admin/settings
+Authorization: Bearer <token>
+
+{
+  "brandConfig": {
+    "siteName": "Loïc Dev",
+    "tagline": "Full-stack engineer",
+    "siteUrl": "https://loic.dev",
+    "seoTitle": "Loïc Dev — Portfolio",
+    "seoDescription": "Full-stack engineer specialising in TypeScript and React.",
+    "logoUrl": "/uploads/logo.webp",
+    "ogImage": "/uploads/og.webp",
+    "socialLinks": [
+      { "platform": "github",   "url": "https://github.com/username" },
+      { "platform": "linkedin", "url": "https://linkedin.com/in/username" },
+      { "platform": "twitter",  "url": "https://twitter.com/username" }
+    ]
+  }
+}
+```
+
+Supported social platforms: `github` `linkedin` `twitter` `bluesky` `mastodon` `instagram` `youtube` `twitch` `devto` `dribbble` `codepen` `stackoverflow` `discord` `rss`
+
+---
+
+## i18n
+
+- Append `?lang=fr` to any public endpoint to get content in French (falls back to `defaultLocale`).
+- Append `?lang=fr&strict=1` to return only content that has a French translation.
+- Translations are **upserted** on PUT — send only the locales you want to change.
+- Every public post/project/page response includes `"hreflang": [{ "locale": "en", "slug": "..." }, ...]` for `<link rel="alternate">` injection.
+
+---
+
+## RSS & Sitemap
+
+```
+GET $API/rss.xml?lang=en
+GET $API/rss/fr.xml
+GET $API/sitemap.xml
+```
+
+---
+
+## Admin stats & activity
+
+```
+GET $API/admin/stats        → { posts, pages, projects, media, users, recentPosts, ... }
+GET $API/admin/activity     → recent create/update/delete log
+```
+
+---
+
+## Contact form
+
+```
+POST $API/contact
+{ "name": "Jane", "email": "jane@example.com", "subject": "Hello", "message": "..." }
+→ 201
+
+GET   $API/admin/contact?status=NEW&page=1
+PATCH $API/admin/contact/:id   { "status": "ARCHIVED" }
+DELETE $API/admin/contact/:id
+```
+
+---
+
+## Common workflows
+
+### Publish a new blog post
+1. `POST /auth/login` → save `token`
+2. Build TipTap JSON from your text (see format section above)
+3. `POST /admin/posts` with `translations.en.content` = TipTap doc
+4. Set `"status": "PUBLISHED"` or `"scheduledAt"` for future publishing
+
+### Add a project to the portfolio
+1. (Optional) `POST /admin/media` to upload a cover image → get `url`
+2. `POST /admin/projects` with `coverImage`, `techStack`, `githubUrl`, `liveUrl`, and `translations`
+
+### Update branding / social links
+`PUT /admin/settings` with a `brandConfig` payload. Partial updates are fine — only the keys you send are changed.
+
+### Bulk-publish drafts
+`POST /admin/posts/bulk` with `{ "action": "publish", "ids": [...] }`
+
+### Add a skill to the CV
+`POST /admin/skills` with `name`, `category`, `level`, `visible: true`
+
+### Reorder portfolio projects
+`PUT /admin/projects/reorder` with `{ "ids": ["id_first", "id_second", ...] }`
+
+---
+
+## Error responses
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Validation error — `{ "error": "message" }` |
+| 401 | Missing or invalid JWT |
+| 403 | Insufficient role |
+| 404 | Resource not found |
+| 409 | Conflict (duplicate slug/email) |
+| 429 | Rate limit exceeded (contact endpoint: 3 req/min per IP) |

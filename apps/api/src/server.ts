@@ -2,6 +2,9 @@ import Fastify from "fastify"
 import cors from "@fastify/cors"
 import multipart from "@fastify/multipart"
 import staticFiles from "@fastify/static"
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { join, dirname } from "node:path"
 import { prisma } from "@chronos/db"
 import { env } from "./env.js"
 import jwtPlugin from "./plugins/jwt.js"
@@ -74,6 +77,14 @@ const buildApp = async () => {
 
   fastify.get("/health", async (_req, reply) => {
     return reply.send({ status: "ok", ts: new Date().toISOString() })
+  })
+
+  const llmsTxt = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../../../llms.txt"),
+    "utf-8",
+  )
+  fastify.get("/llms.txt", async (_req, reply) => {
+    return reply.type("text/plain; charset=utf-8").send(llmsTxt)
   })
 
   return fastify

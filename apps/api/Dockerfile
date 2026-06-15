@@ -15,6 +15,7 @@ RUN npm install
 
 # Copy source
 COPY tsconfig.base.json ./
+COPY llms.txt ./
 COPY packages/db/ ./packages/db/
 COPY apps/api/ ./apps/api/
 
@@ -37,6 +38,7 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/db/package.json ./packages/db/package.json
 COPY --from=builder /app/packages/db/prisma ./packages/db/prisma
+COPY --from=builder /app/llms.txt ./llms.txt
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY apps/api/entrypoint.sh ./entrypoint.sh
