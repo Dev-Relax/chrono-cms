@@ -44,6 +44,21 @@ const ActionIcon: Record<string, string> = {
   "project.updated": "✎",
   "project.published": "◉",
   "project.deleted": "✕",
+  "skill.created": "✚",
+  "skill.updated": "✎",
+  "skill.deleted": "✕",
+  "experience.created": "✚",
+  "experience.updated": "✎",
+  "experience.deleted": "✕",
+  "education.created": "✚",
+  "education.updated": "✎",
+  "education.deleted": "✕",
+  "testimonial.created": "★",
+  "testimonial.updated": "★",
+  "testimonial.deleted": "✕",
+  "certification.created": "✚",
+  "certification.updated": "✎",
+  "certification.deleted": "✕",
   "user.created": "👤",
   "user.deleted": "👤",
   "apikey.created": "🔑",
@@ -181,6 +196,34 @@ const AdminDashboard: React.FC = () => {
                 accent="text-emerald-400"
               />
             )}
+          </div>
+
+          {/* Portfolio quick-access */}
+          <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            <div className="border-b border-slate-800 px-5 py-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Portfolio data
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-slate-800 sm:grid-cols-3 lg:grid-cols-6">
+              {([
+                { to: "/admin/skills",         icon: "⚙",  label: "Skills" },
+                { to: "/admin/experiences",     icon: "🏢", label: "Experience" },
+                { to: "/admin/education",       icon: "🎓", label: "Education" },
+                { to: "/admin/testimonials",    icon: "★",  label: "Testimonials" },
+                { to: "/admin/contact",         icon: "✉",  label: "Contact" },
+                { to: "/admin/certifications",  icon: "🏅", label: "Certifications" },
+              ] as const).map(({ to, icon, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="flex flex-col items-center gap-1.5 bg-slate-900/60 px-4 py-5 text-center transition-colors hover:bg-slate-900"
+                >
+                  <span className="text-xl leading-none">{icon}</span>
+                  <span className="text-xs font-medium text-slate-400">{label}</span>
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">

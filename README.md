@@ -21,6 +21,12 @@
     - [Pages](#pages-endpoints)
     - [Projects](#projects-endpoints)
     - [Comments](#comments-endpoints)
+    - [Skills](#skills-endpoints)
+    - [Work Experience](#work-experience-endpoints)
+    - [Education](#education-endpoints)
+    - [Testimonials](#testimonials-endpoints)
+    - [Contact](#contact-endpoints)
+    - [Certifications](#certifications-endpoints)
     - [Media](#media-endpoints)
     - [Users](#users-endpoints-admin-only)
     - [Settings](#settings-endpoints)
@@ -110,6 +116,18 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **Admin moderation panel** — approve, reject, spam, delete, bulk actions
 - **Pending count badge** on the admin nav
 
+### Portfolio data
+
+A complete set of structured data types to power a developer portfolio — all exposed via the public REST API for use in any headless frontend.
+
+- **Skills** — name, category, level (BEGINNER → EXPERT), icon, drag-drop reorder, visibility toggle, `?category=` filter
+- **Work Experience** — company, location, date range, logo; fully i18n (role + rich-text description per locale); drag-drop reorder
+- **Education** — institution, field, date range, logo; fully i18n (degree + rich-text description per locale); drag-drop reorder
+- **Testimonials** — author, role, company, avatar, star rating (1–5), featured flag, visibility toggle, drag-drop reorder
+- **Certifications** — title, issuer, issue/expiry dates, credential URL, logo, drag-drop reorder; expired badge in the admin UI
+- **Social Links** — 14 platforms (GitHub, LinkedIn, Twitter/X, Bluesky, Mastodon, Instagram, YouTube, Twitch, Dev.to, Dribbble, CodePen, Stack Overflow, Discord, RSS); stored in `brandConfig`, returned by `GET /settings`
+- **Contact form** — `POST /contact` public endpoint (rate-limited 3 req/min per IP); submissions stored with NEW / READ / ARCHIVED status; admin inbox with click-to-expand and auto-mark-as-read; "Reply by email" mailto shortcut; new-submission badge in the admin sidebar; fires `contact.submitted` webhook
+
 ### Media
 
 - **Image upload** — drag & drop or click to browse, multi-file
@@ -129,8 +147,8 @@ Chronos CMS is a **monorepo** shipping three packages:
 - **Content format negotiation** — append `?format=html` or `?format=markdown` to any public read endpoint; the API converts TipTap JSON on the fly
 - **Locale filtering** — `?lang=fr` returns content in French (with fallback); `?lang=fr&strict=1` filters to only content that has a French translation
 - **Per-locale RSS feeds** — `/rss.xml?lang=fr` or `/rss/fr.xml`
-- **Multilingual sitemap** — `GET /sitemap.xml` emits one `<url>` per locale translation for both posts and pages
-- **Webhooks** — configurable outbound HTTP callbacks with HMAC-SHA256 signing; payloads include the full `translations[]` array so consumers can build locale-aware workflows
+- **Multilingual sitemap** — `GET /sitemap.xml` emits one `<url>` per locale translation for posts, pages, and projects; uses the canonical `siteUrl` from `brandConfig` when set
+- **Webhooks** — configurable outbound HTTP callbacks with HMAC-SHA256 signing; payloads include the full `translations[]` array so consumers can build locale-aware workflows; fires `contact.submitted` on new contact form submissions
 - **API keys** — machine-to-machine access without JWT sessions
 - **Activity log** — every create/update/publish/delete is recorded
 - **CORS configurable** — comma-separated `CORS_ORIGIN` env var
@@ -209,19 +227,25 @@ chrono-cms/
     │       ├── plugins/
     │       │   └── jwt.ts         # JWT plugin + authenticate decorator
     │       ├── routes/
-    │       │   ├── auth.ts        # /auth/login, /auth/me
-    │       │   ├── posts.ts       # /posts + /admin/posts CRUD, revisions, search
-    │       │   ├── pages.ts       # /pages + /admin/pages CRUD
-    │       │   ├── projects.ts    # /projects + /admin/projects CRUD, reorder, blog-link
-    │       │   ├── comments.ts    # /posts/:id/comments (public) + /admin/comments
-    │       │   ├── media.ts       # /admin/media upload/list/delete
-    │       │   ├── users.ts       # /admin/users CRUD (ADMIN only)
-    │       │   ├── settings.ts    # /settings (read/write)
-    │       │   ├── webhooks.ts    # /admin/webhooks CRUD + test
-    │       │   ├── apikeys.ts     # /admin/apikeys CRUD
-    │       │   ├── activity.ts    # /admin/activity log
-    │       │   ├── stats.ts       # /admin/stats dashboard summary
-    │       │   └── rss.ts         # /rss.xml, /rss/:lang.xml, /sitemap.xml
+    │       │   ├── auth.ts           # /auth/login, /auth/me
+    │       │   ├── posts.ts          # /posts + /admin/posts CRUD, revisions, search
+    │       │   ├── pages.ts          # /pages + /admin/pages CRUD
+    │       │   ├── projects.ts       # /projects + /admin/projects CRUD, reorder, blog-link
+    │       │   ├── comments.ts       # /posts/:id/comments (public) + /admin/comments
+    │       │   ├── skills.ts         # /skills + /admin/skills CRUD, reorder
+    │       │   ├── experiences.ts    # /experiences + /admin/experiences CRUD, reorder (i18n)
+    │       │   ├── education.ts      # /education + /admin/education CRUD, reorder (i18n)
+    │       │   ├── testimonials.ts   # /testimonials + /admin/testimonials CRUD, reorder
+    │       │   ├── contact.ts        # POST /contact (public, rate-limited) + /admin/contact
+    │       │   ├── certifications.ts # /certifications + /admin/certifications CRUD, reorder
+    │       │   ├── media.ts          # /admin/media upload/list/delete
+    │       │   ├── users.ts          # /admin/users CRUD (ADMIN only)
+    │       │   ├── settings.ts       # /settings (read/write, incl. socialLinks + siteUrl)
+    │       │   ├── webhooks.ts       # /admin/webhooks CRUD + test
+    │       │   ├── apikeys.ts        # /admin/apikeys CRUD
+    │       │   ├── activity.ts       # /admin/activity log
+    │       │   ├── stats.ts          # /admin/stats dashboard summary
+    │       │   └── rss.ts            # /rss.xml, /rss/:lang.xml, /sitemap.xml
     │       └── utils/
     │           ├── slugify.ts
     │           ├── requireRole.ts
@@ -405,13 +429,30 @@ Source: [`packages/db/prisma/schema.prisma`](packages/db/prisma/schema.prisma)
 
 ### Enums
 
-| Enum            | Values                                 |
-| --------------- | -------------------------------------- |
-| `Role`          | `ADMIN` `EDITOR` `AUTHOR`              |
-| `PostStatus`    | `DRAFT` `PUBLISHED`                    |
-| `PageStatus`    | `DRAFT` `PUBLISHED`                    |
-| `ProjectStatus` | `DRAFT` `PUBLISHED`                    |
-| `CommentStatus` | `PENDING` `APPROVED` `SPAM` `REJECTED` |
+| Enum                | Values                                 |
+| ------------------- | -------------------------------------- |
+| `Role`              | `ADMIN` `EDITOR` `AUTHOR`              |
+| `PostStatus`        | `DRAFT` `PUBLISHED`                    |
+| `PageStatus`        | `DRAFT` `PUBLISHED`                    |
+| `ProjectStatus`     | `DRAFT` `PUBLISHED`                    |
+| `CommentStatus`     | `PENDING` `APPROVED` `SPAM` `REJECTED` |
+| `SkillLevel`        | `BEGINNER` `INTERMEDIATE` `ADVANCED` `EXPERT` |
+| `SubmissionStatus`  | `NEW` `READ` `ARCHIVED`                |
+
+### Portfolio models (simplified)
+
+| Model                    | Key fields                                                              |
+| ------------------------ | ----------------------------------------------------------------------- |
+| `Skill`                  | `name`, `slug`, `category`, `level` (enum), `icon`, `order`, `visible` |
+| `Experience`             | `company`, `location`, `startDate`, `endDate`, `url`, `logoUrl`, `order` + translations |
+| `ExperienceTranslation`  | `locale`, `role`, `description` (TipTap JSON)                          |
+| `Education`              | `institution`, `field`, `startDate`, `endDate`, `url`, `logoUrl`, `order` + translations |
+| `EducationTranslation`   | `locale`, `degree`, `description` (TipTap JSON)                        |
+| `Testimonial`            | `author`, `role`, `company`, `avatarUrl`, `content`, `rating`, `featured`, `visible`, `order` |
+| `ContactSubmission`      | `name`, `email`, `subject`, `message`, `status` (`SubmissionStatus`)   |
+| `Certification`          | `title`, `issuer`, `issuedAt`, `expiresAt`, `credentialUrl`, `logoUrl`, `order` |
+
+Social links are stored as JSON inside `SiteSettings.brandConfig` (no separate table).
 
 ### `Post` fields (global, locale-agnostic)
 
@@ -1065,6 +1106,231 @@ Cascades to replies.
 
 ---
 
+---
+
+### Skills Endpoints
+
+#### `GET /skills`
+
+Public. All visible skills, ordered by `order`.
+
+| Query param | Description                          |
+| ----------- | ------------------------------------ |
+| `category`  | Filter by category (e.g. `Frontend`) |
+
+Response: `{ "data": Skill[] }`
+
+---
+
+#### `GET /admin/skills` 🔒 _(EDITOR+)_ · `POST /admin/skills` 🔒 · `PUT /admin/skills/:id` 🔒 · `DELETE /admin/skills/:id` 🔒
+
+Standard CRUD. `POST` / `PUT` body:
+
+```json
+{
+  "name": "TypeScript",
+  "slug": "typescript",
+  "category": "Frontend",
+  "level": "EXPERT",
+  "icon": "typescript",
+  "order": 0,
+  "visible": true
+}
+```
+
+#### `PUT /admin/skills/reorder` 🔒
+
+```json
+{ "ids": ["clx…", "cly…", "clz…"] }
+```
+
+Response: `204`
+
+---
+
+### Work Experience Endpoints
+
+#### `GET /experiences`
+
+Public. All experiences, ordered by `order`. Returns flattened to the requested locale.
+
+| Query param | Description                          |
+| ----------- | ------------------------------------ |
+| `lang`      | Preferred locale (fallback applies)  |
+
+Response: `{ "data": Experience[] }`
+
+---
+
+#### Admin CRUD 🔒 _(EDITOR+)_
+
+`GET /admin/experiences` · `GET /admin/experiences/:id` (with all translations) · `POST /admin/experiences` · `PUT /admin/experiences/:id` · `PUT /admin/experiences/reorder` · `DELETE /admin/experiences/:id`
+
+`POST` / `PUT` body:
+
+```json
+{
+  "company": "Acme Corp",
+  "location": "Paris, France",
+  "startDate": "2022-01-01T00:00:00.000Z",
+  "endDate": null,
+  "url": "https://acme.com",
+  "logoUrl": "/uploads/acme.webp",
+  "translations": {
+    "en": { "role": "Senior Engineer", "description": { "type": "doc", "content": [] } },
+    "fr": { "role": "Ingénieur Senior",  "description": { "type": "doc", "content": [] } }
+  }
+}
+```
+
+---
+
+### Education Endpoints
+
+Same structure as Work Experience.
+
+`GET /education?lang=fr` (public) · `GET /admin/education` · `GET /admin/education/:id` · `POST /admin/education` · `PUT /admin/education/:id` · `PUT /admin/education/reorder` · `DELETE /admin/education/:id`
+
+`POST` / `PUT` body:
+
+```json
+{
+  "institution": "MIT",
+  "field": "Computer Science",
+  "startDate": "2018-09-01T00:00:00.000Z",
+  "endDate": "2022-06-30T00:00:00.000Z",
+  "translations": {
+    "en": { "degree": "Bachelor of Science", "description": { "type": "doc", "content": [] } }
+  }
+}
+```
+
+---
+
+### Testimonials Endpoints
+
+#### `GET /testimonials`
+
+Public. All visible testimonials, ordered by `order`.
+
+| Query param | Description                |
+| ----------- | -------------------------- |
+| `featured`  | `true` to filter to featured only |
+
+Response: `{ "data": Testimonial[] }`
+
+---
+
+#### Admin CRUD 🔒 _(EDITOR+)_
+
+`GET /admin/testimonials` · `POST /admin/testimonials` · `PUT /admin/testimonials/:id` · `PUT /admin/testimonials/reorder` · `DELETE /admin/testimonials/:id`
+
+`POST` / `PUT` body:
+
+```json
+{
+  "author": "Jane Smith",
+  "role": "CTO",
+  "company": "Acme Corp",
+  "avatarUrl": "https://…/avatar.webp",
+  "content": "Working with this developer was a pleasure…",
+  "rating": 5,
+  "featured": true,
+  "visible": true
+}
+```
+
+---
+
+### Contact Endpoints
+
+#### `POST /contact`
+
+Public. Submit a contact form message. Rate-limited to **3 requests per minute per IP**.
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "subject": "Project inquiry",
+  "message": "Hello, I'd like to discuss…"
+}
+```
+
+Response: `201 { "data": ContactSubmission, "message": "Your message has been received." }`
+
+Fires a `contact.submitted` webhook with the submission's `id`, `name`, `email`, and `subject`.
+
+Errors: `400` validation · `429` rate limit exceeded
+
+---
+
+#### `GET /admin/contact/new-count` 🔒
+
+Badge count of unread submissions.
+
+```json
+{ "count": 3 }
+```
+
+---
+
+#### `GET /admin/contact` 🔒 _(EDITOR+)_
+
+Paginated inbox.
+
+| Query param     | Description                          |
+| --------------- | ------------------------------------ |
+| `status`        | `NEW` / `READ` / `ARCHIVED`          |
+| `page`, `limit` | Pagination                           |
+
+Response: `PaginatedResponse<ContactSubmission>`
+
+---
+
+#### `PATCH /admin/contact/:id` 🔒 _(EDITOR+)_
+
+Update status.
+
+```json
+{ "status": "ARCHIVED" }
+```
+
+#### `DELETE /admin/contact/:id` 🔒 _(EDITOR+)_
+
+Response: `204`
+
+---
+
+### Certifications Endpoints
+
+#### `GET /certifications`
+
+Public. All certifications, ordered by `order`.
+
+Response: `{ "data": Certification[] }`
+
+---
+
+#### Admin CRUD 🔒 _(EDITOR+)_
+
+`GET /admin/certifications` · `POST /admin/certifications` · `PUT /admin/certifications/:id` · `PUT /admin/certifications/reorder` · `DELETE /admin/certifications/:id`
+
+`POST` / `PUT` body:
+
+```json
+{
+  "title": "AWS Solutions Architect – Associate",
+  "issuer": "Amazon Web Services",
+  "issuedAt": "2024-03-01T00:00:00.000Z",
+  "expiresAt": "2027-03-01T00:00:00.000Z",
+  "credentialUrl": "https://aws.amazon.com/verification/…",
+  "logoUrl": "/uploads/aws.webp"
+}
+```
+
+---
+
 ### Media Endpoints
 
 Uploaded files are stored in `apps/api/uploads/` and served at `/uploads/*`.
@@ -1165,9 +1431,30 @@ Update theme and/or brand config.
 ```json
 {
   "themeConfig": { "colors": { "primary": "#6366f1" }, … },
-  "brandConfig": { "siteName": "My Blog", "tagline": "Words & ideas" }
+  "brandConfig": {
+    "siteName": "My Blog",
+    "tagline": "Words & ideas",
+    "siteUrl": "https://example.com",
+    "socialLinks": [
+      { "platform": "github", "url": "https://github.com/username" },
+      { "platform": "linkedin", "url": "https://linkedin.com/in/username" }
+    ]
+  }
 }
 ```
+
+`brandConfig` fields:
+
+| Field           | Description                                                                      |
+| --------------- | -------------------------------------------------------------------------------- |
+| `siteName`      | Replaces "Chronos CMS" in headers and browser title                              |
+| `tagline`       | Short subtitle below the blog heading                                            |
+| `seoTitle`      | Global `<title>` tag                                                             |
+| `seoDescription`| Global meta description                                                          |
+| `logoUrl`       | Optional logo image URL                                                          |
+| `ogImage`       | Default Open Graph image (1200×630 px recommended)                               |
+| `siteUrl`       | Canonical root URL — used by `GET /sitemap.xml` as the `<loc>` base             |
+| `socialLinks`   | Array of `{ platform, url }` — 14 platforms supported (github, linkedin, twitter, bluesky, mastodon, instagram, youtube, twitch, devto, dribbble, codepen, stackoverflow, discord, rss) |
 
 Response: `200 { "data": SiteSettings }`
 
@@ -1189,9 +1476,10 @@ Outbound HTTP callbacks fired on CMS events. All payloads include a full `transl
 | `page.updated`   | A published page is updated       |
 | `page.published` | A page transitions to `PUBLISHED` |
 | `page.deleted`   | A page is deleted                 |
-| `project.published` | A project is created as / transitions to `PUBLISHED` |
-| `project.updated`   | A published project is updated    |
-| `project.deleted`   | A project is deleted              |
+| `project.published`   | A project is created as / transitions to `PUBLISHED` |
+| `project.updated`     | A published project is updated    |
+| `project.deleted`     | A project is deleted              |
+| `contact.submitted`   | A contact form submission is received |
 
 #### Payload shape
 
@@ -1317,18 +1605,27 @@ The `<language>` tag in the feed reflects the requested locale. Link these in yo
 
 #### `GET /sitemap.xml`
 
-Public. XML sitemap covering all published post and page translations — one `<url>` per locale per content item.
+Public. XML sitemap covering all published posts, projects, and pages — one `<url>` per locale translation per content item. The base URL is read from `brandConfig.siteUrl` (set in Branding & SEO settings); falls back to the request `Origin` header.
+
+| Content type | Path pattern          | Priority | Changefreq |
+| ------------ | --------------------- | -------- | ---------- |
+| Homepage     | `/`                   | `1.0`    | daily      |
+| Posts        | `/posts/:slug`        | `0.8`    | weekly     |
+| Projects     | `/projects/:slug`     | `0.7`    | weekly     |
+| Pages        | `/:slug`              | `0.6`    | monthly    |
 
 ```xml
 <url>
   <loc>https://example.com/posts/my-post</loc>
-  <lastmod>2026-03-14</lastmod>
+  <lastmod>2026-06-14</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://example.com/posts/mon-article</loc>
-  …
+  <loc>https://example.com/projects/chronos-cms</loc>
+  <lastmod>2026-06-14</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
 </url>
 <url>
   <loc>https://example.com/about</loc>
@@ -1524,11 +1821,22 @@ Images are rendered with `float`/`margin`/`width` inline styles matching the edi
 | `/admin/projects`          | `ProjectsAdmin`    | 🔒       | Projects list with drag / up-down reordering            |
 | `/admin/projects/new`      | `ProjectEditorPage`| 🔒       | Create project — locale tabs, tech chips, blog link     |
 | `/admin/projects/:id/edit` | `ProjectEditorPage`| 🔒       | Edit project — locale tabs, tech chips, blog link       |
+| `/admin/skills`                  | `SkillsAdmin`           | 🔒       | Skills & technologies — CRUD, level, category, drag-drop order |
+| `/admin/experiences`             | `ExperiencesAdmin`      | 🔒       | Work experience — CRUD, locale tabs, drag-drop order            |
+| `/admin/experiences/new`         | `ExperienceEditorPage`  | 🔒       | Create experience — locale tabs + rich text description         |
+| `/admin/experiences/:id/edit`    | `ExperienceEditorPage`  | 🔒       | Edit experience                                                 |
+| `/admin/education`               | `EducationAdmin`        | 🔒       | Education — CRUD, locale tabs, drag-drop order                  |
+| `/admin/education/new`           | `EducationEditorPage`   | 🔒       | Create education entry                                          |
+| `/admin/education/:id/edit`      | `EducationEditorPage`   | 🔒       | Edit education entry                                            |
+| `/admin/testimonials`            | `TestimonialsAdmin`     | 🔒       | Testimonials — inline CRUD, star rating, visible/featured flags |
+| `/admin/contact`                 | `ContactAdmin`          | 🔒       | Contact submissions — status inbox (NEW/READ/ARCHIVED), mailto  |
+| `/admin/certifications`          | `CertificationsAdmin`   | 🔒       | Certifications — inline CRUD, expiry check, credential links    |
 | `/admin/design`         | `DesignCustomizer` | 🔒       | Theme settings (built-in blog only)                        |
 | `/admin/media`          | `MediaLibrary`     | 🔒       | Upload, copy URL, delete images                            |
 | `/admin/comments`       | `CommentsAdmin`    | 🔒       | Moderate comments, bulk actions                            |
 | `/admin/webhooks`       | `WebhooksAdmin`    | 🔒       | Manage webhooks, test endpoints                            |
 | `/admin/apikeys`        | `ApiKeysAdmin`     | 🔒       | Manage API keys                                            |
+| `/admin/branding`       | `BrandingPage`     | 🔒       | Site name, logo, SEO defaults, social links, Site URL      |
 | `/admin/users`          | `UserManagement`   | 🔒 ADMIN | Invite users, change roles, delete                         |
 
 All admin routes are wrapped in `ProtectedRoute` (redirects to `/login`). All pages are lazy-loaded.
