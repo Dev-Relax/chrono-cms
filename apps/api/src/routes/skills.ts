@@ -81,7 +81,15 @@ export const skillsRoutes = async (fastify: FastifyInstance) => {
       if (data.name && !data.slug) data.slug = slugify(data.name)
       const skill = await prisma.skill.update({
         where: { id: request.params.id },
-        data,
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.slug !== undefined && { slug: data.slug }),
+          ...(data.category !== undefined && { category: data.category }),
+          ...(data.level !== undefined && { level: data.level }),
+          ...(data.icon !== undefined && { icon: data.icon }),
+          ...(data.order !== undefined && { order: data.order }),
+          ...(data.visible !== undefined && { visible: data.visible }),
+        },
       })
       const user = request.user as { id: string }
       logActivity({ userId: user.id, action: "skill.updated", entityType: "skill", entityId: skill.id, entityTitle: skill.name })

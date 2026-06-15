@@ -91,9 +91,12 @@ export const certificationsRoutes = async (fastify: FastifyInstance): Promise<vo
 
     const cert = await prisma.certification.create({
       data: {
-        ...parse.data,
+        title: parse.data.title,
+        issuer: parse.data.issuer,
         issuedAt: new Date(parse.data.issuedAt),
         expiresAt: parse.data.expiresAt ? new Date(parse.data.expiresAt) : null,
+        credentialUrl: parse.data.credentialUrl ?? null,
+        logoUrl: parse.data.logoUrl ?? null,
         order: parse.data.order ?? nextOrder,
       },
       select,
@@ -128,11 +131,15 @@ export const certificationsRoutes = async (fastify: FastifyInstance): Promise<vo
       const cert = await prisma.certification.update({
         where: { id: req.params.id },
         data: {
-          ...parse.data,
-          ...(parse.data.issuedAt ? { issuedAt: new Date(parse.data.issuedAt) } : {}),
-          ...(parse.data.expiresAt !== undefined
-            ? { expiresAt: parse.data.expiresAt ? new Date(parse.data.expiresAt) : null }
-            : {}),
+          ...(parse.data.title !== undefined && { title: parse.data.title }),
+          ...(parse.data.issuer !== undefined && { issuer: parse.data.issuer }),
+          ...(parse.data.issuedAt !== undefined && { issuedAt: new Date(parse.data.issuedAt) }),
+          ...(parse.data.expiresAt !== undefined && {
+            expiresAt: parse.data.expiresAt ? new Date(parse.data.expiresAt) : null,
+          }),
+          ...(parse.data.credentialUrl !== undefined && { credentialUrl: parse.data.credentialUrl }),
+          ...(parse.data.logoUrl !== undefined && { logoUrl: parse.data.logoUrl }),
+          ...(parse.data.order !== undefined && { order: parse.data.order }),
         },
         select,
       })

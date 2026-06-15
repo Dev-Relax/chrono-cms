@@ -112,7 +112,17 @@ export const testimonialsRoutes = async (fastify: FastifyInstance) => {
         return reply.status(400).send({ error: parsed.error.issues[0]?.message })
       const t = await prisma.testimonial.update({
         where: { id: request.params.id },
-        data: parsed.data,
+        data: {
+          ...(parsed.data.author !== undefined && { author: parsed.data.author }),
+          ...(parsed.data.role !== undefined && { role: parsed.data.role }),
+          ...(parsed.data.company !== undefined && { company: parsed.data.company }),
+          ...(parsed.data.avatarUrl !== undefined && { avatarUrl: parsed.data.avatarUrl }),
+          ...(parsed.data.content !== undefined && { content: parsed.data.content }),
+          ...(parsed.data.rating !== undefined && { rating: parsed.data.rating }),
+          ...(parsed.data.featured !== undefined && { featured: parsed.data.featured }),
+          ...(parsed.data.visible !== undefined && { visible: parsed.data.visible }),
+          ...(parsed.data.order !== undefined && { order: parsed.data.order }),
+        },
       })
       logActivity({
         userId: getUserId(request),
