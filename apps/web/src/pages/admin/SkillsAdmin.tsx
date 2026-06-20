@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import * as LucideIcons from "lucide-react"
+import * as LucideAll from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { skillsApi, ApiError } from "../../lib/api.js"
 import type { Skill, SkillLevel } from "../../types/index.js"
@@ -7,9 +7,10 @@ import { Layout } from "../../components/common/Layout.js"
 import { SkeletonTableRows } from "../../components/common/Skeleton.js"
 import { IconPickerModal, toPascal } from "../../components/common/IconPickerModal.js"
 
+const lucideIcons = (LucideAll as unknown as { icons: Record<string, LucideIcon> }).icons
+
 const SkillIcon: React.FC<{ slug: string; size?: number }> = ({ slug, size = 16 }) => {
-  const key = toPascal(slug)
-  const Component = (LucideIcons as Record<string, unknown>)[key] as LucideIcon | undefined
+  const Component = lucideIcons[toPascal(slug)]
   if (!Component) return <span className="font-mono text-xs text-slate-500">{slug}</span>
   return <Component size={size} strokeWidth={1.5} className="text-slate-400" />
 }

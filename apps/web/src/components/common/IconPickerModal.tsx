@@ -1,6 +1,10 @@
 import React, { useMemo, useRef, useState } from "react"
-import * as LucideIcons from "lucide-react"
+import * as LucideAll from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+
+// lucide-react v1.x: individual icon exports are React.forwardRef objects, not plain functions.
+// The `icons` named export is a namespace of all canonical icons (no `Icon`-suffix aliases).
+const rawIcons = (LucideAll as unknown as { icons: Record<string, LucideIcon> }).icons
 
 function toKebab(name: string): string {
   return name
@@ -18,13 +22,15 @@ function toPascal(slug: string): string {
     .join("")
 }
 
-const ICON_ENTRIES: Array<{ name: string; slug: string; Component: LucideIcon }> = (() => {
-  const all = LucideIcons as Record<string, unknown>
-  return Object.keys(all)
-    .filter((key) => /^[A-Z]/.test(key) && typeof all[key] === "function" && key !== "createLucideIcon")
-    .map((name) => ({ name, slug: toKebab(name), Component: all[name] as LucideIcon }))
-    .sort((a, b) => a.slug.localeCompare(b.slug))
-})()
+interface IconEntry {
+  name: string
+  slug: string
+  Component: LucideIcon
+}
+
+const ICON_ENTRIES: IconEntry[] = Object.keys(rawIcons)
+  .map((name) => ({ name, slug: toKebab(name), Component: rawIcons[name]! }))
+  .sort((a, b) => a.slug.localeCompare(b.slug))
 
 const PAGE_SIZE = 120
 
@@ -62,8 +68,10 @@ export const IconPickerModal: React.FC<Props> = ({ selected, onSelect, onClose }
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={handleOverlayClick}
     >
-      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
-        style={{ maxHeight: "85vh" }}>
+      <div
+        className="flex w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+        style={{ maxHeight: "85vh" }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 px-5 py-4">
           <h2 className="text-sm font-semibold text-slate-200">Choose an icon</h2>
