@@ -1,11 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { certificationsApi, ApiError } from "../../lib/api.js"
-import type { Certification } from "../../types/index.js"
+import type { Certification, TipTapDoc } from "../../types/index.js"
 import { Layout } from "../../components/common/Layout.js"
 import { SkeletonTableRows } from "../../components/common/Skeleton.js"
+import { RichTextEditor } from "../../components/editor/RichTextEditor.js"
 
-const emptyForm = {
-  title: "",
+const EMPTY_DOC: TipTapDoc = { type: "doc", content: [{ type: "paragraph" }] }
+
+const KNOWN_FLAGS: Record<string, string> = {
+  en: "🇬🇧", "en-us": "🇺🇸", fr: "🇫🇷", de: "🇩🇪", es: "🇪🇸",
+  it: "🇮🇹", pt: "🇵🇹", nl: "🇳🇱", ru: "🇷🇺", ja: "🇯🇵",
+  ko: "🇰🇷", zh: "🇨🇳", ar: "🇸🇦", pl: "🇵🇱", tr: "🇹🇷",
+}
+const getLocaleFlag = (locale: string) => KNOWN_FLAGS[locale.toLowerCase()] ?? "🌐"
+const COMMON_LOCALES = ["fr", "es", "de", "it", "pt", "nl", "ru", "ja", "ko", "zh", "ar", "pl", "tr"]
+
+interface LocaleData {
+  title: string
+  description: TipTapDoc
+}
+const emptyLocale = (): LocaleData => ({ title: "", description: EMPTY_DOC })
+type LocaleMap = Record<string, LocaleData>
+
+const emptyShared = {
   issuer: "",
   issuedAt: "",
   expiresAt: "",
@@ -28,15 +46,20 @@ const toInputDate = (iso: string | null | undefined): string => {
 }
 
 const CertificationsAdmin: React.FC = () => {
+  const { t } = useTranslation()
   const [certs, setCerts] = useState<Certification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
   const [savingOrder, setSavingOrder] = useState(false)
   const [editingId, setEditingId] = useState<string | "new" | null>(null)
-  const [form, setForm] = useState(emptyForm)
+  const [shared, setShared] = useState(emptyShared)
+  const [locales, setLocales] = useState<LocaleMap>({ en: emptyLocale() })
+  const [activeLocale, setActiveLocale] = useState("en")
+  const [addingLocale, setAddingLocale] = useState(false)
+  const [newLocaleInput, setNewLocaleInput] = useState("")
   const [saving, setSaving] = useState(false)
-  const titleRef = useRef<HTMLInputElement>(null)
+  const addLocaleRef = useRef<HTMLInputElement>(null)
 
   const fetchCerts = useCallback(() => {
     setLoading(true)
@@ -50,45 +73,116 @@ const CertificationsAdmin: React.FC = () => {
   useEffect(() => { fetchCerts() }, [fetchCerts])
 
   useEffect(() => {
-    if (editingId !== null) titleRef.current?.focus()
-  }, [editingId])
+    if (addingLocale) addLocaleRef.current?.focus()
+  }, [addingLocale])
+
+  const resetForm = () => {
+    setShared(emptyShared)
+    setLocales({ en: emptyLocale() })
+    setActiveLocale("en")
+    setAddingLocale(false)
+    setNewLocaleInput("")
+  }
 
   const openNew = () => {
-    setForm(emptyForm)
+    resetForm()
     setEditingId("new")
   }
 
   const openEdit = (c: Certification) => {
-    setForm({
-      title: c.title,
+    setShared({
       issuer: c.issuer,
       issuedAt: toInputDate(c.issuedAt),
       expiresAt: toInputDate(c.expiresAt),
       credentialUrl: c.credentialUrl ?? "",
       logoUrl: c.logoUrl ?? "",
     })
+    const map: LocaleMap = {}
+    if (c.translations && c.translations.length > 0) {
+      for (const tr of c.translations) {
+        map[tr.locale] = {
+          title: tr.title,
+          description: (tr.description as TipTapDoc | null) ?? EMPTY_DOC,
+        }
+      }
+    } else {
+      map["en"] = { title: c.title, description: EMPTY_DOC }
+    }
+    setLocales(map)
+    setActiveLocale(Object.keys(map)[0] ?? "en")
     setEditingId(c.id)
   }
 
-  const closeForm = () => { setEditingId(null); setForm(emptyForm) }
+  const closeForm = () => { setEditingId(null); resetForm() }
 
-  const set = <K extends keyof typeof emptyForm>(key: K, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }))
+  const setSharedField = <K extends keyof typeof emptyShared>(key: K, value: string) =>
+    setShared((f) => ({ ...f, [key]: value }))
+
+  const setLocaleField = <K extends keyof LocaleData>(key: K, value: LocaleData[K]) => {
+    setLocales((prev) => ({
+      ...prev,
+      [activeLocale]: { ...emptyLocale(), ...prev[activeLocale], [key]: value },
+    }))
+  }
+
+  const commitAddLocale = (code: string) => {
+    const normalized = code.trim().toLowerCase().slice(0, 10)
+    if (!normalized || locales[normalized]) {
+      setAddingLocale(false)
+      setNewLocaleInput("")
+      return
+    }
+    setLocales((prev) => ({ ...prev, [normalized]: emptyLocale() }))
+    setActiveLocale(normalized)
+    setAddingLocale(false)
+    setNewLocaleInput("")
+  }
+
+  const removeLocale = (locale: string) => {
+    if (Object.keys(locales).length === 1) return
+    const next = { ...locales }
+    delete next[locale]
+    setLocales(next)
+    if (activeLocale === locale) setActiveLocale(Object.keys(next)[0] ?? "en")
+  }
+
+  const handleDescriptionChange = useCallback(
+    (doc: TipTapDoc) => {
+      setLocales((prev) => ({
+        ...prev,
+        [activeLocale]: { ...emptyLocale(), ...prev[activeLocale], description: doc },
+      }))
+    },
+    [activeLocale],
+  )
 
   const handleSave = async () => {
-    if (!form.title.trim()) { setError("Title is required"); return }
-    if (!form.issuer.trim()) { setError("Issuer is required"); return }
-    if (!form.issuedAt) { setError("Issue date is required"); return }
+    if (!shared.issuer.trim()) { setError(t("certifications.issuerRequired")); return }
+    if (!shared.issuedAt) { setError(t("certifications.issuedAtRequired")); return }
+    if (!Object.values(locales).some((l) => l.title.trim())) {
+      setError(t("certifications.titleRequired"))
+      return
+    }
+
     setSaving(true)
     setError(null)
     try {
+      const translations: Record<string, { title: string; description: Record<string, unknown> }> = {}
+      for (const [locale, data] of Object.entries(locales)) {
+        if (data.title.trim()) {
+          translations[locale] = {
+            title: data.title.trim(),
+            description: data.description as Record<string, unknown>,
+          }
+        }
+      }
       const payload = {
-        title: form.title.trim(),
-        issuer: form.issuer.trim(),
-        issuedAt: new Date(form.issuedAt).toISOString(),
-        expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
-        credentialUrl: form.credentialUrl.trim() || null,
-        logoUrl: form.logoUrl.trim() || null,
+        issuer: shared.issuer.trim(),
+        issuedAt: new Date(shared.issuedAt).toISOString(),
+        expiresAt: shared.expiresAt ? new Date(shared.expiresAt).toISOString() : null,
+        credentialUrl: shared.credentialUrl.trim() || null,
+        logoUrl: shared.logoUrl.trim() || null,
+        translations,
       }
       if (editingId === "new") {
         const { data } = await certificationsApi.create(payload)
@@ -99,19 +193,19 @@ const CertificationsAdmin: React.FC = () => {
       }
       closeForm()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Save failed")
+      setError(err instanceof ApiError ? err.message : t("certifications.saveFailed"))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (c: Certification) => {
-    if (!confirm(`Delete "${c.title}"? This cannot be undone.`)) return
+    if (!confirm(t("certifications.deleteConfirm", { title: c.title }))) return
     try {
       await certificationsApi.delete(c.id)
       setCerts((prev) => prev.filter((x) => x.id !== c.id))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Delete failed")
+      setError(err instanceof ApiError ? err.message : t("certifications.saveFailed"))
     }
   }
 
@@ -120,7 +214,7 @@ const CertificationsAdmin: React.FC = () => {
     try {
       await certificationsApi.reorder(ordered.map((c) => c.id))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Reorder failed")
+      setError(err instanceof ApiError ? err.message : t("certifications.saveFailed"))
       fetchCerts()
     } finally {
       setSavingOrder(false)
@@ -148,27 +242,30 @@ const CertificationsAdmin: React.FC = () => {
   const isExpired = (expiresAt: string | null): boolean =>
     !!expiresAt && new Date(expiresAt) < new Date()
 
+  const localeKeys = Object.keys(locales)
+  const currentLocale = locales[activeLocale] ?? emptyLocale()
+
   return (
     <Layout admin>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Certifications</h1>
+          <h1 className="text-2xl font-bold text-slate-50">{t("certifications.title")}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Drag rows to reorder{savingOrder ? " · saving…" : ""}
+            {t("certifications.dragHint")}{savingOrder ? ` · ${t("certifications.savingOrder")}` : ""}
           </p>
         </div>
         <button
           onClick={openNew}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"
         >
-          + New certification
+          + {t("certifications.newCert")}
         </button>
       </div>
 
       {error && (
         <div className="mb-4 rounded-lg border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">dismiss</button>
+          <button onClick={() => setError(null)} className="ml-2 underline">{t("common.close")}</button>
         </div>
       )}
 
@@ -176,84 +273,168 @@ const CertificationsAdmin: React.FC = () => {
       {editingId !== null && (
         <div className="mb-6 rounded-xl border border-slate-700 bg-slate-900 p-6">
           <h2 className="mb-5 text-sm font-semibold text-slate-300">
-            {editingId === "new" ? "New certification" : "Edit certification"}
+            {editingId === "new" ? t("certifications.newCert") : t("certifications.editCert")}
           </h2>
+
+          {/* Locale tabs + per-locale content */}
+          <div className="mb-5 rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
+            <div className="flex items-center gap-0.5 border-b border-slate-800 px-4 pt-3 overflow-x-auto">
+              {localeKeys.map((locale) => {
+                const hasTitle = Boolean(locales[locale]?.title.trim())
+                return (
+                  <button
+                    key={locale}
+                    onClick={() => setActiveLocale(locale)}
+                    className={[
+                      "flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors",
+                      activeLocale === locale
+                        ? "border border-b-0 border-slate-700 bg-slate-900 text-slate-100"
+                        : "text-slate-500 hover:text-slate-300",
+                    ].join(" ")}
+                  >
+                    <span>{getLocaleFlag(locale)}</span>
+                    {locale.toUpperCase()}
+                    {!hasTitle && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Title missing" />
+                    )}
+                    {localeKeys.length > 1 && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); removeLocale(locale) }}
+                        className="ml-0.5 cursor-pointer text-slate-600 hover:text-red-400"
+                      >
+                        ✕
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+
+              {!addingLocale ? (
+                <button
+                  onClick={() => setAddingLocale(true)}
+                  className="ml-1 rounded px-2 py-1 text-xs text-slate-600 hover:text-slate-300 transition-colors"
+                >
+                  {t("certifications.addLocale")}
+                </button>
+              ) : (
+                <div className="ml-1 flex items-center gap-1">
+                  <input
+                    ref={addLocaleRef}
+                    value={newLocaleInput}
+                    onChange={(e) => setNewLocaleInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitAddLocale(newLocaleInput)
+                      if (e.key === "Escape") { setAddingLocale(false); setNewLocaleInput("") }
+                    }}
+                    list="common-locales-cert"
+                    placeholder="fr"
+                    className="w-16 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-100 focus:outline-none"
+                  />
+                  <datalist id="common-locales-cert">
+                    {COMMON_LOCALES.filter((l) => !locales[l]).map((l) => (
+                      <option key={l} value={l} />
+                    ))}
+                  </datalist>
+                  <button
+                    onClick={() => commitAddLocale(newLocaleInput)}
+                    className="text-xs text-brand-400 hover:text-brand-300"
+                  >✓</button>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="mb-1 block text-xs text-slate-400">{t("certifications.titleLabel")}</label>
+                <input
+                  value={currentLocale.title}
+                  onChange={(e) => setLocaleField("title", e.target.value)}
+                  className={inputCls}
+                  placeholder={t("certifications.titlePlaceholder")}
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs text-slate-400">{t("certifications.descriptionLabel")}</label>
+                <div className="min-h-[140px] rounded-lg border border-slate-700 bg-slate-900">
+                  <RichTextEditor
+                    key={activeLocale}
+                    content={currentLocale.description}
+                    onChange={handleDescriptionChange}
+                    placeholder={t("certifications.descriptionPlaceholder")}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Shared (locale-agnostic) fields */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Title *</label>
+              <label className="mb-1 block text-xs text-slate-400">{t("certifications.issuerLabel")}</label>
               <input
-                ref={titleRef}
-                value={form.title}
-                onChange={(e) => set("title", e.target.value)}
+                value={shared.issuer}
+                onChange={(e) => setSharedField("issuer", e.target.value)}
                 className={inputCls}
-                placeholder="AWS Solutions Architect"
+                placeholder={t("certifications.issuerPlaceholder")}
                 maxLength={200}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Issuer *</label>
-              <input
-                value={form.issuer}
-                onChange={(e) => set("issuer", e.target.value)}
-                className={inputCls}
-                placeholder="Amazon Web Services"
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-slate-400">Issue date *</label>
+              <label className="mb-1 block text-xs text-slate-400">{t("certifications.issuedAtLabel")}</label>
               <input
                 type="date"
-                value={form.issuedAt}
-                onChange={(e) => set("issuedAt", e.target.value)}
+                value={shared.issuedAt}
+                onChange={(e) => setSharedField("issuedAt", e.target.value)}
                 className={inputCls}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Expiry date</label>
+              <label className="mb-1 block text-xs text-slate-400">{t("certifications.expiresAtLabel")}</label>
               <input
                 type="date"
-                value={form.expiresAt}
-                onChange={(e) => set("expiresAt", e.target.value)}
+                value={shared.expiresAt}
+                onChange={(e) => setSharedField("expiresAt", e.target.value)}
                 className={inputCls}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Credential URL</label>
+              <label className="mb-1 block text-xs text-slate-400">{t("certifications.credentialUrlLabel")}</label>
               <input
                 type="url"
-                value={form.credentialUrl}
-                onChange={(e) => set("credentialUrl", e.target.value)}
+                value={shared.credentialUrl}
+                onChange={(e) => setSharedField("credentialUrl", e.target.value)}
                 className={inputCls}
                 placeholder="https://…"
                 maxLength={500}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-slate-400">Logo URL</label>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-400">{t("certifications.logoUrlLabel")}</label>
               <input
                 type="url"
-                value={form.logoUrl}
-                onChange={(e) => set("logoUrl", e.target.value)}
+                value={shared.logoUrl}
+                onChange={(e) => setSharedField("logoUrl", e.target.value)}
                 className={inputCls}
                 placeholder="https://…"
                 maxLength={500}
               />
             </div>
           </div>
+
           <div className="mt-5 flex gap-2">
             <button
               onClick={() => void handleSave()}
               disabled={saving}
               className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-50 transition-colors"
             >
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("editor.saving") : t("common.save")}
             </button>
             <button
               onClick={closeForm}
               className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -265,20 +446,21 @@ const CertificationsAdmin: React.FC = () => {
           <thead>
             <tr className="border-b border-slate-800 text-left">
               <th className="w-8 px-4 py-3" />
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Certification</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Issuer</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Issued</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Expires</th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("certifications.colCertification")}</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("certifications.colIssuer")}</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("certifications.colIssued")}</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("certifications.colExpires")}</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("certifications.colTranslations")}</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <SkeletonTableRows cols={6} rows={4} />
+              <SkeletonTableRows cols={7} rows={4} />
             ) : certs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                  No certifications yet. Click "+ New certification" to add one.
+                <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  {t("certifications.noCerts", { button: t("certifications.newCert") })}
                 </td>
               </tr>
             ) : (
@@ -322,28 +504,32 @@ const CertificationsAdmin: React.FC = () => {
                             className="text-xs text-brand-400 hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            View credential ↗
+                            {t("certifications.viewCredential")}
                           </a>
                         )}
                       </div>
                     </div>
                   </td>
 
-                  {/* Issuer */}
                   <td className="px-4 py-4 text-slate-400">{c.issuer}</td>
 
-                  {/* Issued */}
                   <td className="px-4 py-4 text-slate-400 whitespace-nowrap">{fmtDate(c.issuedAt)}</td>
 
-                  {/* Expires */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     {c.expiresAt ? (
                       <span className={isExpired(c.expiresAt) ? "text-red-400" : "text-slate-400"}>
-                        {isExpired(c.expiresAt) ? "Expired " : ""}{fmtDate(c.expiresAt)}
+                        {isExpired(c.expiresAt) ? `${t("certifications.expired")} ` : ""}{fmtDate(c.expiresAt)}
                       </span>
                     ) : (
-                      <span className="text-emerald-500 text-xs">No expiry</span>
+                      <span className="text-emerald-500 text-xs">{t("certifications.noExpiry")}</span>
                     )}
+                  </td>
+
+                  {/* Translation count */}
+                  <td className="px-4 py-4">
+                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
+                      {c.translationCount ?? c.translations?.length ?? 0} lang
+                    </span>
                   </td>
 
                   {/* Actions */}
@@ -363,13 +549,13 @@ const CertificationsAdmin: React.FC = () => {
                         onClick={() => openEdit(c)}
                         className="text-slate-400 hover:text-slate-100 transition-colors"
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
                         onClick={() => void handleDelete(c)}
                         className="text-red-500 hover:text-red-400 transition-colors"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </td>

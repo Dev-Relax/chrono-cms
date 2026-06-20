@@ -492,6 +492,7 @@ model Skill {
 
 model Certification {
   id            String    @id @default(cuid())
+  /// Canonical/fallback title — kept for backward compat; translations take precedence
   title         String
   issuer        String
   issuedAt      DateTime
@@ -502,8 +503,27 @@ model Certification {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  translations CertificationTranslation[]
+
   @@index([order])
   @@map("certifications")
+}
+
+// ── CertificationTranslation ──────────────────────────────────────────────────
+
+model CertificationTranslation {
+  id              String        @id @default(cuid())
+  certificationId String
+  locale          String
+  title           String
+  /// Optional TipTap ProseMirror document stored as raw JSON
+  description     Json          @default("{}")
+
+  certification Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([certificationId, locale])
+  @@index([locale])
+  @@map("certification_translations")
 }
 
 // ── ContactSubmission ─────────────────────────────────────────────────────────

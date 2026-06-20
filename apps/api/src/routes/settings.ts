@@ -82,6 +82,13 @@ const themeConfigSchema = z.object({
   layout: themeLayoutSchema,
 })
 
+const brandLocaleSchema = z.object({
+  siteName: z.string().max(100).optional(),
+  tagline: z.string().max(200).optional(),
+  seoTitle: z.string().max(100).optional(),
+  seoDescription: z.string().max(300).optional(),
+})
+
 const brandConfigSchema = z.object({
   siteName: z.string().min(1).max(100),
   tagline: z.string().max(200),
@@ -91,6 +98,7 @@ const brandConfigSchema = z.object({
   ogImage: z.string().max(500),
   siteUrl: z.string().url().max(500).or(z.literal("")).optional(),
   socialLinks: z.array(socialLinkSchema).optional(),
+  locales: z.record(brandLocaleSchema).optional(),
 })
 
 const navItemSchema = z.object({

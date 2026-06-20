@@ -113,6 +113,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...DEFAULT_BRAND_CONFIG,
           ...(data.brandConfig as Partial<BrandConfig>),
           socialLinks: (data.brandConfig as Partial<BrandConfig>).socialLinks ?? [],
+          locales: (data.brandConfig as Partial<BrandConfig>).locales ?? {},
         }
         setSavedBrand(brand)
         setDraftBrandState(brand)

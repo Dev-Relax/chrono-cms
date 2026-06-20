@@ -82,9 +82,15 @@ export type Skill = {
   updatedAt: string
 }
 
+export type CertificationTranslation = {
+  id: string
+  locale: string
+  title: string
+  description: TipTapDoc
+}
+
 export type Certification = {
   id: string
-  title: string
   issuer: string
   issuedAt: string
   expiresAt: string | null
@@ -93,6 +99,13 @@ export type Certification = {
   order: number
   createdAt: string
   updatedAt: string
+  /** Flattened from the active translation (falls back to canonical title). */
+  locale: string
+  title: string
+  description: TipTapDoc
+  translationCount?: number
+  hreflang?: Array<{ locale: string }>
+  translations?: CertificationTranslation[]
 }
 
 export type SubmissionStatus = "NEW" | "READ" | "ARCHIVED"
@@ -401,6 +414,14 @@ export type ThemeConfig = {
   layout: ThemeLayoutConfig
 }
 
+/** Per-locale overrides for the translatable branding text fields. */
+export type BrandLocale = {
+  siteName?: string
+  tagline?: string
+  seoTitle?: string
+  seoDescription?: string
+}
+
 export type BrandConfig = {
   /** Replaces "Chronos CMS" in headers, title, RSS, etc. */
   siteName: string
@@ -418,6 +439,8 @@ export type BrandConfig = {
   siteUrl: string
   /** Social / professional profile links shown in the portfolio */
   socialLinks: SocialLink[]
+  /** Per-locale overrides for translatable text fields (siteName, tagline, seoTitle, seoDescription). */
+  locales?: Record<string, BrandLocale>
 }
 
 export const DEFAULT_BRAND_CONFIG: BrandConfig = {
@@ -429,6 +452,7 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   ogImage: "",
   siteUrl: "",
   socialLinks: [],
+  locales: {},
 }
 
 export type NavItemType = "blog" | "projects" | "page" | "custom"

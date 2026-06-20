@@ -715,18 +715,24 @@ export const contactApi = {
   delete: (id: string) => request<void>(`/admin/contact/${id}`, { method: "DELETE" }),
 }
 
-export type CertificationPayload = {
+export type CertificationTranslationPayload = {
   title: string
+  description?: Record<string, unknown>
+}
+
+export type CertificationPayload = {
   issuer: string
   issuedAt: string
   expiresAt?: string | null
   credentialUrl?: string | null
   logoUrl?: string | null
   order?: number
+  translations: Record<string, CertificationTranslationPayload>
 }
 
 export const certificationsApi = {
-  list: () => request<{ data: Certification[] }>("/certifications"),
+  list: (lang?: string) =>
+    request<{ data: Certification[] }>(`/certifications${lang ? `?lang=${encodeURIComponent(lang)}` : ""}`),
 
   adminList: () => request<{ data: Certification[] }>("/admin/certifications"),
 
@@ -744,6 +750,7 @@ export const certificationsApi = {
   reorder: (ids: string[]) =>
     request<void>("/admin/certifications/reorder", { method: "PUT", body: { ids } }),
 }
+
 
 export const revisionsApi = {
   list: (postId: string, lang?: string) =>
