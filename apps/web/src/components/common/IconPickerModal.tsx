@@ -196,8 +196,8 @@ export const IconPickerModal: React.FC<Props> = ({ selected, onSelect, onClose }
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-8 gap-0.5 overflow-y-auto p-3">
+        {/* Grid — flex-1 min-h-0 lets this shrink within the flex column and scroll */}
+        <div className="grid min-h-0 flex-1 grid-cols-8 content-start gap-0.5 overflow-y-auto p-3">
           {siLoading && tab === "brands" ? (
             <div className="col-span-8 py-12 text-center text-sm text-slate-500">Loading brand icons…</div>
           ) : tab === "lucide" ? (
