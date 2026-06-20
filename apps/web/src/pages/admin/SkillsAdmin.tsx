@@ -1,15 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import * as LucideAll from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import type { SimpleIcon } from "simple-icons"
 import { skillsApi, ApiError } from "../../lib/api.js"
 import type { Skill, SkillLevel } from "../../types/index.js"
 import { Layout } from "../../components/common/Layout.js"
 import { SkeletonTableRows } from "../../components/common/Skeleton.js"
-import { IconPickerModal, toPascal } from "../../components/common/IconPickerModal.js"
+import { IconPickerModal, toPascal, loadSimpleIcons, type SiMap } from "../../components/common/IconPickerModal.js"
 
 const lucideIcons = (LucideAll as unknown as { icons: Record<string, LucideIcon> }).icons
 
-const SkillIcon: React.FC<{ slug: string; size?: number }> = ({ slug, size = 16 }) => {
+const SkillIcon: React.FC<{ slug: string; size?: number; siMap: SiMap | null }> = ({ slug, size = 16, siMap }) => {
+  if (slug.startsWith("si:")) {
+    const icon: SimpleIcon | undefined = siMap?.[slug.slice(3)]
+    if (!icon) return <span className="font-mono text-xs text-slate-500">{slug.slice(3)}</span>
+    return (
+      <svg role="img" viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="text-slate-400" aria-hidden>
+        <path d={icon.path} />
+      </svg>
+    )
+  }
   const Component = lucideIcons[toPascal(slug)]
   if (!Component) return <span className="font-mono text-xs text-slate-500">{slug}</span>
   return <Component size={size} strokeWidth={1.5} className="text-slate-400" />
@@ -48,6 +58,7 @@ const SkillsAdmin: React.FC = () => {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [showIconPicker, setShowIconPicker] = useState(false)
+  const [siMap, setSiMap] = useState<SiMap | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
 
   const fetchSkills = useCallback(() => {
@@ -62,6 +73,12 @@ const SkillsAdmin: React.FC = () => {
   useEffect(() => {
     fetchSkills()
   }, [fetchSkills])
+
+  useEffect(() => {
+    if (skills.some((s) => s.icon?.startsWith("si:"))) {
+      loadSimpleIcons().then(setSiMap)
+    }
+  }, [skills])
 
   useEffect(() => {
     if (editingId !== null) nameRef.current?.focus()
@@ -269,7 +286,7 @@ const SkillsAdmin: React.FC = () => {
                 >
                   {form.icon ? (
                     <>
-                      <SkillIcon slug={form.icon} size={16} />
+                      <SkillIcon slug={form.icon} size={16} siMap={siMap} />
                       <span className="font-mono text-xs text-slate-300">{form.icon}</span>
                     </>
                   ) : (
@@ -358,7 +375,7 @@ const SkillsAdmin: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {skill.icon && <SkillIcon slug={skill.icon} size={16} />}
+                      {skill.icon && <SkillIcon slug={skill.icon} size={16} siMap={siMap} />}
                       <span className="font-medium text-slate-100">{skill.name}</span>
                       <span className="text-slate-600 text-xs">{skill.slug}</span>
                     </div>
@@ -417,6 +434,8 @@ const SkillsAdmin: React.FC = () => {
           onSelect={(slug) => {
             setForm((f) => ({ ...f, icon: slug }))
             setShowIconPicker(false)
+            // Sync siMap after picker may have loaded simple-icons
+            if (slug.startsWith("si:")) loadSimpleIcons().then(setSiMap)
           }}
           onClose={() => setShowIconPicker(false)}
         />
