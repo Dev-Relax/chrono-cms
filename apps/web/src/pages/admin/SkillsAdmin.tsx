@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
+import * as LucideIcons from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { skillsApi, ApiError } from "../../lib/api.js"
 import type { Skill, SkillLevel } from "../../types/index.js"
 import { Layout } from "../../components/common/Layout.js"
 import { SkeletonTableRows } from "../../components/common/Skeleton.js"
+import { IconPickerModal, toPascal } from "../../components/common/IconPickerModal.js"
+
+const SkillIcon: React.FC<{ slug: string; size?: number }> = ({ slug, size = 16 }) => {
+  const key = toPascal(slug)
+  const Component = (LucideIcons as Record<string, unknown>)[key] as LucideIcon | undefined
+  if (!Component) return <span className="font-mono text-xs text-slate-500">{slug}</span>
+  return <Component size={size} strokeWidth={1.5} className="text-slate-400" />
+}
 
 const LEVEL_LABELS: Record<SkillLevel, string> = {
   BEGINNER: "Beginner",
@@ -36,6 +46,7 @@ const SkillsAdmin: React.FC = () => {
   const [editingId, setEditingId] = useState<string | "new" | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [showIconPicker, setShowIconPicker] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
 
   const fetchSkills = useCallback(() => {
@@ -248,13 +259,33 @@ const SkillsAdmin: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Icon (Lucide slug or URL)</label>
-              <input
-                value={form.icon}
-                onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-brand-500 focus:outline-none"
-                placeholder="code-2"
-              />
+              <label className="mb-1 block text-xs text-slate-400">Icon</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowIconPicker(true)}
+                  className="flex flex-1 items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 transition-colors hover:border-brand-500 focus:border-brand-500 focus:outline-none"
+                >
+                  {form.icon ? (
+                    <>
+                      <SkillIcon slug={form.icon} size={16} />
+                      <span className="font-mono text-xs text-slate-300">{form.icon}</span>
+                    </>
+                  ) : (
+                    <span className="text-slate-500">Choose icon…</span>
+                  )}
+                </button>
+                {form.icon && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, icon: "" }))}
+                    className="rounded p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+                    title="Remove icon"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex items-end">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -326,9 +357,7 @@ const SkillsAdmin: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {skill.icon && (
-                        <span className="text-slate-400 text-xs font-mono">{skill.icon}</span>
-                      )}
+                      {skill.icon && <SkillIcon slug={skill.icon} size={16} />}
                       <span className="font-medium text-slate-100">{skill.name}</span>
                       <span className="text-slate-600 text-xs">{skill.slug}</span>
                     </div>
@@ -381,6 +410,16 @@ const SkillsAdmin: React.FC = () => {
           </tbody>
         </table>
       </div>
+      {showIconPicker && (
+        <IconPickerModal
+          selected={form.icon}
+          onSelect={(slug) => {
+            setForm((f) => ({ ...f, icon: slug }))
+            setShowIconPicker(false)
+          }}
+          onClose={() => setShowIconPicker(false)}
+        />
+      )}
     </Layout>
   )
 }
