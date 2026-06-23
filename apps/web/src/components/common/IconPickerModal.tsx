@@ -133,19 +133,28 @@ export const IconPickerModal: React.FC<Props> = ({ selected, onSelect, onClose }
     if (e.target === e.currentTarget) onClose()
   }
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [onClose])
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4"
       onClick={handleOverlayClick}
+      aria-hidden="false"
     >
       <div
-        className="flex w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
-        style={{ maxHeight: "85vh" }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="icon-picker-title"
+        className="flex h-[92dvh] w-full max-w-2xl flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl sm:h-[85vh] sm:max-h-[680px]"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 px-5 py-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-slate-200">Choose an icon</h2>
+            <h2 id="icon-picker-title" className="text-sm font-semibold text-slate-200">Choose an icon</h2>
             <div className="flex rounded-lg border border-slate-700 bg-slate-950 p-0.5">
               <button
                 onClick={() => handleTabSwitch("lucide")}
@@ -207,6 +216,8 @@ export const IconPickerModal: React.FC<Props> = ({ selected, onSelect, onClose }
                   key={name}
                   onClick={() => onSelect(slug)}
                   title={slug}
+                  aria-label={slug}
+                  aria-pressed={slug === selectedLucideSlug}
                   className={[
                     "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-center transition-colors",
                     slug === selectedLucideSlug
@@ -231,6 +242,8 @@ export const IconPickerModal: React.FC<Props> = ({ selected, onSelect, onClose }
                   key={icon.slug}
                   onClick={() => onSelect(`si:${icon.slug}`)}
                   title={icon.title}
+                  aria-label={icon.title}
+                  aria-pressed={icon.slug === selectedSiSlug}
                   className={[
                     "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-center transition-colors",
                     icon.slug === selectedSiSlug
