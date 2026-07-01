@@ -35,6 +35,7 @@ const EducationEditorPage = React.lazy(() => import("./pages/admin/EducationEdit
 const TestimonialsAdmin = React.lazy(() => import("./pages/admin/TestimonialsAdmin.js"))
 const ContactAdmin = React.lazy(() => import("./pages/admin/ContactAdmin.js"))
 const CertificationsAdmin = React.lazy(() => import("./pages/admin/CertificationsAdmin.js"))
+const AnalyticsDashboard = React.lazy(() => import("./pages/admin/AnalyticsDashboard.js"))
 
 // Public-route fallback — minimal full-screen spinner
 const PublicSpinner = () => (
@@ -102,6 +103,7 @@ const App: React.FC = () => (
             <Route path="/admin/testimonials" element={<TestimonialsAdmin />} />
             <Route path="/admin/contact" element={<ContactAdmin />} />
             <Route path="/admin/certifications" element={<CertificationsAdmin />} />
+            <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
           </Route>
         </Route>
 

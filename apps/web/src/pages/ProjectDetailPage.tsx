@@ -5,6 +5,7 @@ const { startTransition } = React
 import { projectsApi, resolveMediaUrl } from "../lib/api.js"
 import type { Project } from "../types/index.js"
 import { Layout } from "../components/common/Layout.js"
+import { trackPageView, trackEvent } from "../lib/analytics.js"
 import { PostRenderer } from "../components/editor/PostRenderer.js"
 
 const KNOWN_FLAGS: Record<string, string> = {
@@ -71,6 +72,13 @@ const ProjectDetailPage: React.FC = () => {
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [langOpen])
+
+  // Track page view once the project is resolved (so we can attach the projectId).
+  useEffect(() => {
+    if (!project) return
+    trackPageView(window.location.pathname, { projectId: project.id })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id])
 
   useEffect(() => {
     if (!project) return
@@ -224,6 +232,7 @@ const ProjectDetailPage: React.FC = () => {
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent("outbound_click", { target: project.liveUrl! })}
                   className="rounded-lg bg-brand-600 px-4 py-2 font-semibold text-white hover:bg-brand-700 transition-colors"
                 >
                   {t("projects.liveDemo")} ↗
@@ -234,6 +243,7 @@ const ProjectDetailPage: React.FC = () => {
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent("outbound_click", { target: project.githubUrl! })}
                   className="rounded-lg border border-slate-700 px-4 py-2 font-medium text-slate-300 hover:border-slate-500 hover:text-white transition-colors"
                 >
                   GitHub ↗
@@ -252,6 +262,7 @@ const ProjectDetailPage: React.FC = () => {
                     href={project.blogUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackEvent("outbound_click", { target: project.blogUrl! })}
                     className="rounded-lg border border-slate-700 px-4 py-2 font-medium text-slate-300 hover:border-slate-500 hover:text-white transition-colors"
                   >
                     {t("projects.readMore")} ↗

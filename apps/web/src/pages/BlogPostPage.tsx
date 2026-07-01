@@ -7,6 +7,7 @@ import { Layout } from "../components/common/Layout.js"
 import { PostRenderer } from "../components/editor/PostRenderer.js"
 import { CommentSection } from "../components/comments/CommentSection.js"
 import { readingTimeLabel } from "../lib/readingTime.js"
+import { trackPageView, useReadCompletion } from "../lib/analytics.js"
 
 const KNOWN_FLAGS: Record<string, string> = {
   en: "🇬🇧",
@@ -61,6 +62,15 @@ const BlogPostPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [langOpen, setLangOpen] = useState(false)
   const langRef = useRef<HTMLDivElement>(null)
+
+  const readSentinelRef = useReadCompletion(post?.slug, !!post && !loading)
+
+  // Track page view once the post is resolved (so we can attach the postId).
+  useEffect(() => {
+    if (!post) return
+    trackPageView(window.location.pathname, { postId: post.id })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id])
 
   // Show skeleton only after 150 ms — fast API responses skip it entirely.
   useEffect(() => {
@@ -304,6 +314,8 @@ const BlogPostPage: React.FC = () => {
           <hr className="mb-10 border-slate-800" />
 
           <PostRenderer doc={post.content} />
+
+          <div ref={readSentinelRef} aria-hidden="true" />
 
           <CommentSection postId={post.id} />
         </article>

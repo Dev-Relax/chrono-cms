@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { projectsApi, resolveMediaUrl } from "../lib/api.js"
 import type { Project } from "../types/index.js"
 import { Layout } from "../components/common/Layout.js"
+import { trackPageView } from "../lib/analytics.js"
 import { Sk } from "../components/common/Skeleton.js"
 
 const ProjectsPage: React.FC = () => {
@@ -12,6 +13,8 @@ const ProjectsPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { trackPageView(window.location.pathname) }, [])
 
   useEffect(() => {
     if (!loading) {

@@ -543,6 +543,51 @@ model ContactSubmission {
   @@map("contact_submissions")
 }
 
+// ── AnalyticsPageView ─────────────────────────────────────────────────────────
+// Written by the portfolio frontend on every route change. No PII — IP is not
+// stored; sessionId is a random UUID generated in sessionStorage.
+
+model AnalyticsPageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  locale    String?
+  device    String?
+  sessionId String
+  /// Optional link to a post (set by the tracker when visiting /blog/:slug)
+  postId    String?
+  /// Optional link to a project (set by the tracker when visiting /projects/:slug)
+  projectId String?
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt(sort: Desc)])
+  @@index([sessionId])
+  @@index([postId])
+  @@index([projectId])
+  @@map("analytics_page_views")
+}
+
+// ── AnalyticsEvent ────────────────────────────────────────────────────────────
+// Custom events: outbound link clicks, read completions, etc.
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  /// "outbound_click" | "read_complete" | "project_click" | "contact_open"
+  type      String
+  path      String
+  /// URL for clicks, post slug for reads
+  target    String?
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([path])
+  @@index([createdAt(sort: Desc)])
+  @@index([sessionId])
+  @@map("analytics_events")
+}
+
 // ── ActivityLog ───────────────────────────────────────────────────────────────
 
 model ActivityLog {

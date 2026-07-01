@@ -752,6 +752,48 @@ export const certificationsApi = {
 }
 
 
+export type AnalyticsPeriod = "7d" | "30d" | "90d" | "all"
+
+export interface AnalyticsOverview {
+  summary: { uniqueVisitors: number; totalPageViews: number; totalEvents: number }
+  timeSeries: { date: string; visitors: number; pageViews: number }[]
+  topPages: { path: string; views: number }[]
+  referrers: { referrer: string | null; count: number }[]
+  devices: { device: string; count: number }[]
+}
+
+export interface AnalyticsContent {
+  posts: {
+    postId: string | null
+    title: string
+    slug: string
+    views: number
+    readCompletions: number
+    completionRate: number
+  }[]
+  projects: {
+    projectId: string | null
+    title: string
+    slug: string
+    views: number
+    outboundClicks: number
+  }[]
+}
+
+export interface AnalyticsEvents {
+  byType: { type: string; count: number }[]
+  topTargets: { target: string | null; count: number }[]
+}
+
+export const analyticsApi = {
+  overview: (period: AnalyticsPeriod = "30d") =>
+    request<{ data: AnalyticsOverview }>(`/analytics/overview?period=${period}`),
+  content: (period: AnalyticsPeriod = "30d") =>
+    request<{ data: AnalyticsContent }>(`/analytics/content?period=${period}`),
+  events: (period: AnalyticsPeriod = "30d") =>
+    request<{ data: AnalyticsEvents }>(`/analytics/events?period=${period}`),
+}
+
 export const revisionsApi = {
   list: (postId: string, lang?: string) =>
     request<{ data: unknown[] }>(`/admin/posts/${postId}/revisions${lang ? `?lang=${lang}` : ""}`),

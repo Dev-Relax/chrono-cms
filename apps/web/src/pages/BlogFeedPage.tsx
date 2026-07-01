@@ -7,6 +7,7 @@ import { DEFAULT_SIDEBAR_WIDGETS } from "../types/index.js"
 import { Layout } from "../components/common/Layout.js"
 import { useTheme } from "../context/ThemeContext.js"
 import { readingTimeLabel } from "../lib/readingTime.js"
+import { trackPageView } from "../lib/analytics.js"
 import { Sk } from "../components/common/Skeleton.js"
 
 const BlogFeedPage: React.FC = () => {
@@ -18,6 +19,8 @@ const BlogFeedPage: React.FC = () => {
   const [searchResults, setResults] = useState<Post[] | null>(null)
   const [searching, setSearching] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => { trackPageView(window.location.pathname) }, [])
 
   // Only reveal the skeleton if the API hasn't responded within 150 ms.
   // Fast responses skip the skeleton entirely; posts just fade in.

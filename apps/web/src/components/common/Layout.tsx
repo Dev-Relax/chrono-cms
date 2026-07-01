@@ -32,6 +32,7 @@ const NAV_SECTIONS: { titleKey: string; items: NavItem[] }[] = [
     titleKey: "nav.content",
     items: [
       { to: "/admin", label: "nav.overview", icon: "▤", end: true },
+      { to: "/admin/analytics", label: "nav.analytics", icon: "📈" },
       { to: "/admin/posts", label: "nav.posts", icon: "✍" },
       { to: "/admin/pages", label: "nav.pages", icon: "☰" },
       { to: "/admin/projects", label: "nav.projects", icon: "🗂" },
