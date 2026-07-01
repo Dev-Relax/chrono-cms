@@ -517,6 +517,100 @@ DELETE $API/admin/contact/:id
 
 ---
 
+## Analytics
+
+Self-hosted visitor tracking. Write endpoints are public (no auth). Read endpoints require EDITOR role or above.
+
+### Record a page view (portfolio → CMS)
+```
+POST $API/insights/pageview
+Content-Type: application/json
+
+{
+  "path": "/blog/my-post",
+  "referrer": "https://google.com",
+  "locale": "en-US",
+  "sessionId": "<random-uuid-from-sessionStorage>",
+  "postId": "<optional-cms-post-id>",
+  "projectId": "<optional-cms-project-id>"
+}
+
+→ 201 { "ok": true }
+```
+
+`sessionId` must be a UUID v4. Generate one per tab with `crypto.randomUUID()` and store it in `sessionStorage`. The `postId`/`projectId` fields are optional — they link the page view to a specific piece of CMS content for the per-item stats panel.
+
+### Record a custom event (portfolio → CMS)
+```
+POST $API/insights/event
+Content-Type: application/json
+
+{
+  "type": "outbound_click",
+  "path": "/projects/my-project",
+  "target": "https://github.com/user/repo",
+  "sessionId": "<same-uuid-as-pageview>"
+}
+
+→ 201 { "ok": true }
+```
+
+`type` must be one of: `outbound_click` | `read_complete` | `project_click` | `contact_open`
+
+Rate limit: 120 requests/minute/IP on both write endpoints.
+
+### Overview dashboard data (admin)
+```
+GET $API/insights/overview?period=30d
+Authorization: Bearer <token>
+
+→ 200 {
+  "data": {
+    "summary": { "uniqueVisitors": 423, "totalPageViews": 1840, "totalEvents": 312 },
+    "timeSeries": [{ "date": "2026-06-01", "visitors": 18, "pageViews": 74 }, ...],
+    "topPages": [{ "path": "/", "views": 610 }, { "path": "/blog/my-post", "views": 340 }, ...],
+    "referrers": [{ "referrer": "google.com", "count": 190 }, ...],
+    "devices": [{ "device": "desktop", "count": 290 }, { "device": "mobile", "count": 133 }]
+  }
+}
+```
+
+`period`: `7d` | `30d` | `90d` | `all` (default: `30d`)
+
+### Per-content stats (admin)
+```
+GET $API/insights/content?period=30d
+Authorization: Bearer <token>
+
+→ 200 {
+  "data": {
+    "posts": [
+      { "postId": "...", "title": "My Post", "slug": "my-post",
+        "views": 340, "readCompletions": 180, "completionRate": 53 }
+    ],
+    "projects": [
+      { "projectId": "...", "title": "My Project", "slug": "my-project",
+        "views": 120, "outboundClicks": 45 }
+    ]
+  }
+}
+```
+
+### Event breakdown (admin)
+```
+GET $API/insights/events?period=30d
+Authorization: Bearer <token>
+
+→ 200 {
+  "data": {
+    "byType": [{ "type": "outbound_click", "count": 210 }, { "type": "read_complete", "count": 102 }],
+    "topTargets": [{ "target": "https://github.com/user/repo", "count": 88 }, ...]
+  }
+}
+```
+
+---
+
 ## Common workflows
 
 ### Publish a new blog post
@@ -541,6 +635,15 @@ DELETE $API/admin/contact/:id
 ### Reorder portfolio projects
 `PUT /admin/projects/reorder` with `{ "ids": ["id_first", "id_second", ...] }`
 
+### Wire up analytics from a portfolio frontend
+1. Add the portfolio origin to `CORS_ORIGIN` in the CMS `.env` and restart the API
+2. Copy `apps/web/src/lib/analytics.ts` to the portfolio; set `VITE_API_URL` to the CMS API base URL
+3. Call `trackPageView(pathname)` on every route change
+4. On post/project pages, call `trackPageView(pathname, { postId })` / `trackPageView(pathname, { projectId })` after the content loads
+5. Attach `useReadCompletion(slug, enabled)` to blog post pages for read-completion tracking
+6. Add `onClick={() => trackEvent("outbound_click", { target: href })}` to external links
+7. View data at `/admin/analytics` in the CMS admin panel (period selector: 7d / 30d / 90d / all)
+
 ---
 
 ## Error responses
@@ -552,4 +655,4 @@ DELETE $API/admin/contact/:id
 | 403 | Insufficient role |
 | 404 | Resource not found |
 | 409 | Conflict (duplicate slug/email) |
-| 429 | Rate limit exceeded (contact endpoint: 3 req/min per IP) |
+| 429 | Rate limit exceeded (contact: 3 req/min per IP; analytics write: 120 req/min per IP) |

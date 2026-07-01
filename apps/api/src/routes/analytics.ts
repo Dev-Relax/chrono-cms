@@ -84,7 +84,7 @@ const eventSchema = z.object({
 export const analyticsRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // ── Public: record a page view ────────────────────────────────────────────
 
-  fastify.post("/analytics/pageview", async (req, reply) => {
+  fastify.post("/insights/pageview", async (req, reply) => {
     if (isRateLimited(req.ip ?? "unknown")) {
       return reply.status(429).send({ error: "Too many requests" })
     }
@@ -115,7 +115,7 @@ export const analyticsRoutes = async (fastify: FastifyInstance): Promise<void> =
 
   // ── Public: record a custom event ─────────────────────────────────────────
 
-  fastify.post("/analytics/event", async (req, reply) => {
+  fastify.post("/insights/event", async (req, reply) => {
     if (isRateLimited(req.ip ?? "unknown")) {
       return reply.status(429).send({ error: "Too many requests" })
     }
@@ -137,7 +137,7 @@ export const analyticsRoutes = async (fastify: FastifyInstance): Promise<void> =
   // ── Admin: overview ───────────────────────────────────────────────────────
   // GET /analytics/overview?period=7d|30d|90d|all
 
-  fastify.get("/analytics/overview", { preHandler: fastify.authenticate }, async (req, reply) => {
+  fastify.get("/insights/overview", { preHandler: fastify.authenticate }, async (req, reply) => {
     if (!(await requireRole(req, reply, "EDITOR"))) return
 
     const q = req.query as Record<string, string | undefined>
@@ -213,7 +213,7 @@ export const analyticsRoutes = async (fastify: FastifyInstance): Promise<void> =
   // ── Admin: per-content stats ──────────────────────────────────────────────
   // GET /analytics/content?period=7d|30d|90d|all
 
-  fastify.get("/analytics/content", { preHandler: fastify.authenticate }, async (req, reply) => {
+  fastify.get("/insights/content", { preHandler: fastify.authenticate }, async (req, reply) => {
     if (!(await requireRole(req, reply, "EDITOR"))) return
 
     const q = req.query as Record<string, string | undefined>
@@ -324,7 +324,7 @@ export const analyticsRoutes = async (fastify: FastifyInstance): Promise<void> =
   // ── Admin: event breakdown ────────────────────────────────────────────────
   // GET /analytics/events?period=7d|30d|90d|all
 
-  fastify.get("/analytics/events", { preHandler: fastify.authenticate }, async (req, reply) => {
+  fastify.get("/insights/events", { preHandler: fastify.authenticate }, async (req, reply) => {
     if (!(await requireRole(req, reply, "EDITOR"))) return
 
     const q = req.query as Record<string, string | undefined>

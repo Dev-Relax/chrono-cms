@@ -787,11 +787,11 @@ export interface AnalyticsEvents {
 
 export const analyticsApi = {
   overview: (period: AnalyticsPeriod = "30d") =>
-    request<{ data: AnalyticsOverview }>(`/analytics/overview?period=${period}`),
+    request<{ data: AnalyticsOverview }>(`/insights/overview?period=${period}`),
   content: (period: AnalyticsPeriod = "30d") =>
-    request<{ data: AnalyticsContent }>(`/analytics/content?period=${period}`),
+    request<{ data: AnalyticsContent }>(`/insights/content?period=${period}`),
   events: (period: AnalyticsPeriod = "30d") =>
-    request<{ data: AnalyticsEvents }>(`/analytics/events?period=${period}`),
+    request<{ data: AnalyticsEvents }>(`/insights/events?period=${period}`),
 }
 
 export const revisionsApi = {

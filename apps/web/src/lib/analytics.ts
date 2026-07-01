@@ -34,7 +34,7 @@ export const trackPageView = (
   pagePath: string,
   opts: { postId?: string | null; projectId?: string | null } = {},
 ): void => {
-  beacon("/analytics/pageview", {
+  beacon("/insights/pageview", {
     path: pagePath,
     referrer: document.referrer || null,
     locale: navigator.language,
@@ -54,7 +54,7 @@ export const trackEvent = (
   type: AnalyticsEventType,
   opts: { path?: string; target?: string } = {},
 ): void => {
-  beacon("/analytics/event", {
+  beacon("/insights/event", {
     type,
     path: opts.path ?? window.location.pathname,
     target: opts.target ?? null,
